@@ -1,4 +1,9 @@
 allowBuilds:
   sharp: false
+overrides:
+  # hast-util-to-estree 依赖 style-to-js@^1.0.0，但 1.x 是 CJS 导出，
+  # 在 Node ESM 下 import 拿到 module.exports 对象而非函数（styleToJs is not a function）。
+  # 2.0.0+ 提供真正的 ESM 导出（dist/index.mjs），API 兼容。
+  style-to-js: 2.0.2
 patchedDependencies:
   nextra-theme-docs@4.6.1: patches/nextra-theme-docs@4.6.1.patch

@@ -1,3 +1,3 @@
 export default {
-    "getting-started": "Getting Started",
+    "getting-started": "快速开始",
 };
