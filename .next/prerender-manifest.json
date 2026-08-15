@@ -1,1 +1,11 @@
-{"version":4,"routes":{"/guide/getting-started":{},"/":{}},"dynamicRoutes":{"/[[...mdxPath]]":{"dataRoute":null,"dataRouteRegex":null,"fallback":null,"fallbackRevalidate":false,"fallbackSourceRoute":"/[[...mdxPath]]","routeRegex":"^(?:\\/(.+?))?(?:\\/)?$","allowHeader":[]}},"notFoundRoutes":[],"preview":{"previewModeId":"27f502653a1be8009b6d05f79b699ce6","previewModeSigningKey":"cc1b3a9abc2d5e2e76939c19530a1ab4bf71c113225f7a73bd324395ebfd806c","previewModeEncryptionKey":"e898de815752464ec7864a94df16a46c827b6dd23fa27395f933e9593bdc64ee"}}
+{
+  "version": 4,
+  "routes": {},
+  "dynamicRoutes": {},
+  "notFoundRoutes": [],
+  "preview": {
+    "previewModeId": "3db3c7e863116e9c4e1767225a92a3b1",
+    "previewModeSigningKey": "59999f96261d644e3a840e117f5e7955b7f98df0ea9ba5921d631f78b9cdb7bf",
+    "previewModeEncryptionKey": "a82e280f177e760d8076bb52b5bba8283a349fa186261d18fd59985ad305c1f1"
+  }
+}

@@ -85,19 +85,6 @@ To add a page, just drop an `.mdx` file under `content/` and register its nav ti
 | `pnpm build` | Produce a production build (`next build`) |
 | `pnpm start` | Run the production build |
 
-## Known Issues
-
-- **nextra-theme-docs@4.6.1 Layout validation bug**: `<Layout>` validates its props with Zod only *after* stripping `children`, but the schema still requires `children`, so every page fails with `Invalid input: expected nonoptional, received undefined → at children` (upstream issues [#5034](https://github.com/shuding/nextra/issues/5034) / [#5036](https://github.com/shuding/nextra/issues/5036)). This repo fixes it via `patchedDependencies` in `pnpm-workspace.yaml` (`patches/nextra-theme-docs@4.6.1.patch`). Before upgrading, confirm the fix landed upstream and remove the patch entry.
-- **Dev-mode hydration warning**: next-themes injects a theme class on `<html>` on the client, producing a benign hydration warning that does not affect functionality.
-
-## Development Status and Roadmap
-
-- Nextra 4 App Router migration is complete; the homepage and "Getting started" render correctly.
-- Per the site design doc, the following are planned:
-  - Bilingual i18n (`/en`, `/zh-CN`) with a language switcher.
-  - First batch of doc groups: Guide / API / Resources / UI / Host / Debug.
-  - GitHub Pages static export (`output: 'export'` + `basePath`).
-  - HeroUI-inspired visual design (dark theme, violet-to-blue gradient tokens).
 
 ## Known Limitations
 
