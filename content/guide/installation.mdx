@@ -1,0 +1,121 @@
+# 安装与构建
+
+> 本文介绍如何把 DearOreUI 装进你的客户端：推荐直接使用发布版，需要修改源码或调试时再从源码构建。
+
+## 安装发布版（推荐）
+
+### 1. 下载
+
+前往 [Releases](https://github.com/DearOreUI/DearOreUI/releases)，下载当前最新版的 **`DearOreUI-windows-x64.zip`**。
+
+压缩包内是一个可直接部署的 mod：
+
+```text
+DearOreUI-windows-x64.zip
+├── DearOreUI.dll      # 模组本体
+├── CHANGELOG.md
+├── LICENSE
+└── README.md
+```
+
+### 2. 部署到客户端
+
+把压缩包里的 **`DearOreUI.dll`** 复制到游戏根目录的 `mods/` 文件夹：
+
+```text
+<游戏根目录>/
+├── mods/
+│   └── DearOreUI.dll      # 放这里
+├── data/
+│   └── gui/
+│       └── dist/
+│           └── hbui/      # OreUI 资源（原版自带，不需要你准备）
+└── ...（LeviLamina 客户端的其他文件）
+```
+
+> [!NOTE]
+> DearOreUI 会自动向上查找包含 `data/gui/dist/hbui/index.html` 的目录来定位游戏资源。只要 DLL 位于 `<游戏根目录>/mods/` 下，通常无需额外配置。
+
+### 3. 启动游戏
+
+启动客户端并进入世界列表页（`/play/all`）。如果安装成功，你会在页面上看到居中的 **DearOreUI DEMO** 覆盖层——这是内置演示，证明「注册 → 挂载 → 注入 → 显示」链路已打通。
+
+同时模组会在日志中打印一行数据目录，诊断文件就输出在那里：
+
+```text
+DearOreUI data dir: <数据目录>
+```
+
+### 可选：指定游戏目录
+
+如果 DearOreUI 无法自动定位游戏资源（例如 DLL 不在 `mods/` 下），可以通过环境变量显式指定：
+
+```powershell
+$env:DEAROREUI_MC_PATH = "D:\path\to\game"
+```
+
+设置后再启动游戏。DLL 会自动检测 `data/gui/dist/hbui`，确认无误后打印数据目录并启用运行时。
+
+## 从源码构建
+
+需要修改模组本身、或想验证最新提交时，从源码构建。
+
+### 环境要求
+
+| 依赖 | 要求 |
+| --- | --- |
+| 操作系统 | Windows x64 |
+| Git | 任意版本 |
+| xmake | 最新稳定版 |
+| 编译器 | Visual Studio（含 Clang-CL）或 LLVM 环境 |
+| LeviLamina | 26.10.x 客户端开发包 |
+
+### 配置并构建
+
+```powershell
+git clone https://github.com/DearOreUI/DearOreUI.git
+cd DearOreUI
+
+xmake repo -u                                    # 更新依赖仓库
+xmake f -a x64 -m release -p windows --target_type=client -y   # 配置
+xmake -v -y                                      # 构建
+```
+
+Debug 版本把 `-m release` 换成 `-m debug` 即可：
+
+```powershell
+xmake f -a x64 -m debug -p windows --target_type=client -y
+xmake -v -y
+```
+
+构建产物输出到仓库根目录的 `bin/`，其中 `DearOreUI.dll` 就是模组本体，按上文「部署到客户端」安装即可。
+
+### 构建故障排查
+
+| 现象 | 处理 |
+| --- | --- |
+| 找不到依赖包或改了依赖版本 | 重新执行 `xmake repo -u` |
+| 编译报错 | 确认工具链提供 Clang-CL，且目标为 Windows x64 |
+| LeviLamina 开发包获取失败 | 确认能访问 LeviLamina 26.10.x 依赖仓库 |
+
+> [!WARNING]
+> 构建成功只能证明编译和打包通过，不能证明运行时 OreUI Hook、资源注入或 UI 行为正常。涉及运行时的改动必须在固定的 Minecraft / LeviLamina 客户端中验证，并记录版本、目标页面、诊断 ID 和可复现证据。
+
+## 验证安装
+
+安装或构建完成后，按以下顺序确认：
+
+1. **日志出现 `DearOreUI data dir:`** → 模组已加载，运行时已初始化。
+2. **数据目录存在 `diagnostics.jsonl`** → 诊断链路正常，所有事件（Hook、注入、显示）都会写入这里。
+3. **世界列表页显示 DEMO 覆盖层** → 真实显示链路打通。
+
+如果第 3 步不满足，先看 `diagnostics.jsonl` 里有没有 `ready` 事件，再按 [快速开始](../guide/getting-started.mdx) 的排查表定位。
+
+## 兼容性
+
+| 维度 | 目标 |
+| --- | --- |
+| 平台 | Windows x64 |
+| Minecraft | Bedrock 客户端（26.10.x） |
+| 加载器 | LeviLamina 26.10.x（仅客户端变体） |
+| 页面范围 | 仅 OreUI 技术栈页面（如 `/play/all`）；主菜单/世界内为 JsonUI，不支持 |

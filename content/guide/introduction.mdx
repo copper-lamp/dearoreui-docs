@@ -1,0 +1,308 @@
+# DearOreUI — 为 Minecraft 基岩版 OreUI 而生的运行时扩展平台
+
+> **在游戏运行时内，把 Minecraft 基岩版原生的 OreUI（Coherent Gameface）渲染引擎，变成一个可声明、可注入、可诊断、可编程的 UI 平台。**
+
+DearOreUI 是一个跑在 **LeviLamina 26.10.x 客户端**里的原生 C++20 模组。它不做贴图、不做改包、不模拟——它直接 Hook 到 Minecraft 的 OreUI 渲染引擎内部，在**真实客户端、真实渲染管线**里注入你自己的 UI。
+
+---
+
+## 0. 为什么这个世界需要 DearOreUI
+
+Minecraft 基岩版的 UI 层是一个长期被忽视的"黑盒"：
+
+- **OreUI**（Coherent Gameface）渲染引擎驱动着世界列表、设置、商城等大量界面，但它的页面结构、生命周期、注入点从未被正式公开文档化。
+- 想自定义 UI 的 Mod 开发者只能做两件事：**改资源包**（脆弱、版本敏感、多 Mod 冲突）或 **放弃**。
+- 主流的 OreUI 工具（如 Ore-UI-Customizer）是**离线静态改包工具**，改完必须重启、无法在游戏内实时注入、无法与其他 Mod 协作。
+- 没有任何方案提供**运行时、多 Mod、可诊断、可回退**的 OreUI 扩展能力。
+
+DearOreUI 的存在，就是为了填上这个空白。
+
+---
+
+## 1. 核心能力矩阵
+
+| 能力 | 说明 | 状态 |
+| --- | --- | --- |
+| 🎯 **真实显示链路** | Hook `OreUI::View::initialize` 捕获真实 `cohtml::View*`，经 `OnReadyForBindings` 门控后 `ExecuteScript` 注入，CSSOM 构建 DOM 覆盖层 | ✅ 真实客户端验证通过 |
+| 🧩 **声明式 UI** | `registerOverlay` / `registerPanel` / `registerButton` / `registerPage` / `registerComponent`，几十行代码挂一个界面 | ✅ 已交付 |
+| 🧱 **组件库** | 8 种原版风格组件（按钮/面板/文本/卡片/列表项/输入框/标签栏）+ 主题令牌 | 🚧 阶段 8 进行中 |
+| 👥 **多 Mod 协作** | 统一注册表、依赖排序、冲突检测、变换计划 | ✅ 已交付 |
+| 🔌 **双向桥接** | C++→JS（`ExecuteScript`/`triggerEvent`）、JS→C++（Host 方法 + Facet + 权限校验） | ✅ 架构就绪，JS→C++ 通道阶段 8 落地 |
+| 📊 **全链路诊断** | `diagnostics.jsonl` 结构化事件流 + 21 项能力矩阵 + vtable 指纹 | ✅ 已交付 |
+| 🔒 **零侵入** | 不修改游戏安装目录、不改原版 `#root`、失败自动回退 | ✅ 设计原则，已执行 |
+
+---
+
+## 2. 怎么做到的：一条真实的渲染链路
+
+DearOreUI 不是"看起来能用"，它在**真实客户端**里打通过一条完整的渲染链路：
+
+```text
+ScreenTechStackSelector::getTechStackForScreen   ← 判断当前页面是否为 OreUI 技术栈
+        ↓
+SceneProvider::createScene                       ← 页面创建（PageCreated 生命周期）
+        ↓
+Router 路由方法                                   ← 页面导航（路径/查询/片段）
+        ↓
+OreUI::View::initialize                          ← 捕获真实 cohtml::View*（MCAPI 导出符号）
+        ↓
+OreUI::View::$OnReadyForBindings                 ← 脚本上下文就绪门控（关键）
+        ↓
+CoherentHostBridge::sendScript                   ← 有界延迟队列 + 冲刷
+        ↓
+cohtml::View::ExecuteScript(script)              ← 引擎真实执行 JS
+        ↓
+页面内 bootstrap → CSSOM 构建 DOM                 ← 在全屏 Overlay 中渲染
+```
+
+### 2.1 验证证据（2026-08-15 真实客户端）
+
+| 验证项 | 结果 |
+| --- | --- |
+| `cohtml::View` vtable 指纹 | 与 mcmeta 头文件布局逐槽位一致（GetId/GetTaskFamilyId/GetWidth/GetHeight/EnableImmediateLayout/IsImmediateLayoutEnabled 等 getter 全部吻合） |
+| `ExecuteScript` 槽位 | 索引 60 正确 |
+| `TriggerEvent` 槽位 | 索引 75 正确 |
+| 显示结果 | demo overlay（全屏红遮罩 + 居中 "DearOreUI DEMO" 绿字）在世界列表页正常显示 |
+| 门禁 | 未命中 view 时 `isAvailable()=false`，页面加载零副作用 |
+
+> 这不是"预览器里看起来像"，这是 **`document.createElement` 在真实 OreUI 页面里执行、真实渲染到屏幕上**。
+
+### 2.2 关键工程决策（为什么别人做不到）
+
+| 难点 | DearOreUI 的做法 |
+| --- | --- |
+| `ExecuteScript` 会被引擎静默丢弃 | 必须在 `OnReadyForBindings`（脚本上下文创建后）提交，用门控 + 有界延迟队列 |
+| cohtml 丢弃 `innerHTML` 注入的 `style` 属性 | 只用 `element.style.cssText`（CSSOM 唯一可靠通道） |
+| `position: fixed` 百分比塌缩 | 容器全屏 + 子层 `absolute; top/left/right/bottom: 0` 撑满 |
+| 多版本 ABI 漂移 | vtable 机器码指纹校验，而非硬编码偏移 |
+
+---
+
+## 3. 扩展模型：声明式，多 Mod，可诊断
+
+### 3.1 一个最小的 UI
+
+```cpp
+#include "ll/api/mod/RegisterHelper.h"
+#include "api/IDearOreUIApi.h"
+#include "api/manifest/ModManifest.h"
+#include "api/manifest/UiManifest.h"
+
+using namespace dearoreui::api;
+
+// IDearOreUIApi* oreui = ...; // 阶段 8 提供稳定获取方式，当前参考内置 Demo
+
+bool onLoad() {
+    // 1. 注册 Mod（前置条件：资源/UI 注册都要求 Mod 已注册）
+    ModManifest manifest;
+    manifest.id           = ModId{"my-first-ui"};
+    manifest.modNamespace = "my_first_ui";
+    manifest.modVersion   = Version{1, 0, 0};
+    auto modResult = oreui->registerMod(manifest);
+    if (modResult.isErr()) return false;
+
+    // 2. 声明 Overlay：在哪个页面、锚在哪、要不要吃指针事件
+    UiManifest ui;
+    ui.modNamespace = "my_first_ui";
+    ui.id           = "hello";
+    ui.kind         = UiKind::Overlay;
+    ui.pageScopes   = {PageScope::Any}; // 所有 OreUI 页面
+    ui.anchor       = UiAnchor::Center;
+    ui.fingerprint  = "hello-overlay-v1"; // 冲突检测用
+
+    return oreui->registerOverlay(
+        ModId{"my-first-ui"}, ui, "<div>Hello, DearOreUI!</div>"
+    ).isOk();
+}
+
+LL_REGISTER_MOD(MyMod, onLoad);
+```
+
+**发生了什么**：`registerMod` → Manifest 校验 → 注册表 → `registerOverlay` → 冲突检查 → `UiPlanner` 生成计划 → `MountManager` 挂载 → `RuntimeInjector` 注入 → 真实页面渲染。全链路每个环节都有诊断事件。
+
+### 3.2 声明式组件（阶段 8）
+
+不再手写 `htmlBody` 字符串，用**组件规格树**描述 UI：
+
+```cpp
+component::ComponentSpec panel;
+panel.kind  = component::ComponentKind::Panel;
+panel.label = "DearOreUI";
+
+component::ComponentSpec text;
+text.kind    = component::ComponentKind::Text;
+text.variant = "heading";
+text.label   = "DEMO";
+
+component::ComponentSpec button;
+button.kind    = component::ComponentKind::Button;
+button.variant = "primary";
+button.label   = "OK";
+
+panel.children.push_back(text);
+panel.children.push_back(button);
+
+oreui->registerComponent(ModId{"dearoreui"}, uiManifest, panel);
+```
+
+8 种组件、主题令牌、`ComponentRenderer` → `DomNode` 树 → 通用 CSSOM 渲染器，与普通 Overlay 走同一条管线。
+
+### 3.3 多 Mod 协作模型
+
+```text
+Mod A 注册（manifest + 资源 + 脚本 + 样式 + UI）
+Mod B 注册
+Mod C 注册
+        ↓
+统一注册表（IModRegistry）
+        ↓
+按页面/版本/能力筛选
+        ↓
+依赖排序（DependencyResolver）
+        ↓
+冲突检测（ConflictDetector，指纹/路径/命名空间）
+        ↓
+变换计划（ChangePlanner / PageTransformer）
+        ↓
+注入当前 OreUI 页面
+```
+
+- **失败隔离**：一个 Mod 失败不影响其他 Mod；一个页面失败不影响其他页面。
+- **可回退**：每个注册返回句柄，可注销；Runtime 关闭时全量清理。
+- **版本化变换**：`VersionConstraint`、`Dependency`、`conflicts` 显式声明，未验证版本默认不可用。
+
+---
+
+## 4. 架构分层：渐进式 L0–L6
+
+API 按难度逐级开放，普通 Mod 停在 L1 即可，复杂扩展再升级：
+
+```text
+L0  运行时查询        —— 只读、零副作用（isReady / capabilities / protocolVersion）
+ ↓
+L1  声明式资源注册     —— 资源 / 脚本 / 样式 / UI 声明式注册
+ ↓
+L2  页面生命周期订阅   —— PageContext / 页面事件
+ ↓
+L3  受控 Host API     —— 权限校验的 C++↔JS 双向调用
+ ↓
+L4  版本化代码变换     —— 依赖排序 / 冲突检测 / 变换计划
+ ↓
+L5  Facet Provider    —— 宿主能力抽象
+ ↓
+L6  高级兼容适配       —— vtable 指纹 / 多版本 ABI 适配
+```
+
+**门面 API**（`dearoreui::api`）：
+
+| 门面 | 职责 | 关键方法 |
+| --- | --- | --- |
+| `IRuntimeApi` | 运行时查询 | `getInfo` / `getCapabilities` / `checkSupport` / `getProtocolVersion` / `isReady` |
+| `IModApi` | Mod 生命周期 | `registerMod` / `unregisterMod` / `setModEnabled` |
+| `IResourceApi` | 资源注册 | `registerResource` / `registerScript` / `registerStyleSheet` |
+| `IHostApi` | 宿主桥接 | `registerHostMethod`（带 Permission 白名单） |
+| `IUiApi` | UI 挂载 | `registerOverlay` / `registerPanel` / `registerButton` / `registerPage` / `registerComponent` |
+
+---
+
+## 5. 诊断与可观测性：一切都有据可查
+
+- **结构化事件流**：所有注册/计划/注入/失败都写入 `diagnostics.jsonl`，每个事件带 `id`、`timestamp`、`severity`、`category`、`contextId`、`modId`、`pageId`、`errorCode`、`fields`。
+- **能力矩阵**：`CapabilitySet` 公开 21 项能力的支持等级（`Unknown/Unsupported/Experimental/Supported`）——运行时到底行不行，查询就知道，不靠猜。
+- **vtable 指纹转储**：多版本 ABI 探测的机器码级证据。
+- **Stage 0~7 遥测**：从运行时事实探测到显示链路打通的每阶段都有独立遥测事件。
+
+**权限模型**（9 项，Host 方法强制校验）：
+
+| 权限 | 值 |
+| --- | --- |
+| 资源读 | `resource.read` |
+| 资源注册 | `resource.register` |
+| 页面观察 | `page.observe` |
+| UI 挂载 | `ui.mount` |
+| Host 只读 | `host.read_only` |
+| Host 写 | `host.write` |
+| 资源变换 | `transform.resource` |
+| Bundle 变换 | `transform.bundle` |
+| 诊断读 | `diagnostic.read` |
+
+---
+
+## 6. 给 AI / 自动化开发者的契约
+
+- **契约先行**：`api/` 门面是纯虚接口，命名空间 `dearoreui::api`；文档站示例与源码契约逐一对应，不凭文档想象。
+- **能力矩阵机器可读**：`Capability` + `SupportLevel`，AI 可以按能力查询决定生成什么代码，不生成运行时不可用的 API。
+- **渐进式 L0–L6**：生成代码的复杂度与能力等级匹配；普通场景生成 L1 声明式代码即可。
+- **显式错误**：`Result<T>` / `ErrorCode` 贯穿所有公共 API，AI 生成的集成代码可以显式处理冲突、校验失败、无效参数。
+- **版本与兼容**：`VersionConstraint`、能力矩阵、`VerifiedSince` 字段，兼容性判断有据可依。
+
+---
+
+## 7. 工程保障
+
+| 维度 | 保障 |
+| --- | --- |
+| 单元测试 | 阶段 4~7 全部单元测试通过（注册/计划/挂载/注入/变换） |
+| 回归门禁 | 每次改动不得破坏既有测试；demo 特判替换为通用渲染器时要求回归通过 |
+| 失败隔离 | `ExecuteScript` 由 executor 包裹，异常不向上传播影响页面生命周期 |
+| 门禁约束 | 未命中 view 回退 NullHostBridge；不修改原版 `#root`；不替换原版资源 |
+| 构建 | Windows x64 客户端变体，CI 自动构建 + 发布产物 `DearOreUI-windows-x64.zip` |
+
+---
+
+## 8. 路线图
+
+```text
+✅ 阶段 0~7.1（已交付）
+   Hook 候选验证 / 公共类型与诊断 / Runtime-Mod-API 门面 /
+   Hook-Capability-PageContext / Source-Resource-Inject / IPC-Host-Facet /
+   多 Mod 注册表-冲突-变换 / UI 挂载与声明式 UI / 真实显示链路打通
+
+🚧 阶段 8（进行中）
+   M8.1  通用渲染器（htmlBody→CSSOM）+ JS→C++ binding
+   M8.2  组件库 v0（≥5 组件 + 默认主题）示例 Mod 全链路
+   M8.3  API 冻结为 1.0 候选，文档站/App 对接，真实客户端验收
+```
+
+**验收标准（阶段 8）**：
+
+- ≥5 个原版风格组件可被示例 Mod 在 OreUI 页面显示并交互。
+- 外部 Mod 通过公开 API 完成「注册组件 → 页面显示 → JS 调用 C++ Host → 事件回传」全链路。
+- v1.0 候选：单元测试 + 回归 + 真实客户端验证通过；诊断事件完整；卸载无悬挂。
+
+---
+
+## 9. 诚实的边界
+
+| 边界 | 说明 |
+| --- | --- |
+| 页面范围 | 只覆盖 OreUI 技术栈页面（如 `/play/all`）；主菜单 / 世界内为 JsonUI，单独立项调研 |
+| JS→C++ 通道 | 架构就绪（`HostDispatcher`/`HostMethodRegistry`/Facet），`callHost` 真实实现阶段 8 落地 |
+| 外部 API 入口 | 阶段 8 提供稳定获取方式，当前参考内置 Demo 的 `runtime::IRuntime::api()` |
+
+---
+
+## 10. FAQ
+
+**Q: 这会修改我的游戏安装目录吗？**
+A: 不会。DearOreUI 完全运行时注入，不写游戏安装目录、不改原版资源。模组数据（诊断等）输出到 LeviLamina 数据目录。
+
+**Q: 多个 Mod 都用 DearOreUI，会打架吗？**
+A: 不会。统一注册表 + 依赖排序 + 冲突检测 + 变换计划，冲突显式报错而非静默覆盖。
+
+**Q: 我只想弹个窗，需要懂 OreUI 内部吗？**
+A: 不需要。L1 声明式注册就够；OreUI/Coherent/vtable 的复杂性由运行时承担。
+
+**Q: 支持哪个 Minecraft 版本？**
+A: 目标 LeviLamina 26.10.x / Bedrock 26.10.x / Windows x64，能力矩阵与版本探测保证兼容性有据可依。
+
+**Q: 我在主菜单/世界内看不到 UI？**
+A: 那些是 JsonUI 技术栈，不在当前覆盖范围；阶段 8 聚焦 OreUI 页面，JsonUI 注入单独立项。
+
+---
+
+## 下一步
+
+- [快速开始](../guide/getting-started.mdx) —— 10 分钟跑通第一个 Overlay
+- [安装与构建](../guide/installation.mdx) —— 下载发布版或从源码构建
+- [API 门面与能力](../api/overview.mdx) —— 运行时到底支持什么
