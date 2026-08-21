@@ -225,10 +225,9 @@ export default function HomePage() {
                         <a className="dear-nav__brand" href="#top">DearOreUI</a>
                         <nav className="dear-nav__links" aria-label="主导航">
                             <a className="is-active" href="#top">首页</a>
-                            <a href="/guide/getting-started">文档</a>
-                            <a href={GITHUB}>模块</a>
-                            <a href={DESIGNER}>Designer</a>
-                            <a href={DOCS_REPO}>开发指南</a>
+                            <a href="/guide/introduction">入门指南</a>
+                            <a href="/components/overview">组成部分</a>
+                            <a href="/releases">发行作品</a>
                         </nav>
                         <div className="dear-nav__right">
                             <a className="dear-nav__github" href={GITHUB} aria-label="GitHub 仓库"><GitHubIcon /></a>

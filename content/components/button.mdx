@@ -1,0 +1,66 @@
+# 按钮 Button
+
+> 可点击的 pressable 按钮，是 DearOreUI 最常用的交互组件。直接复用原版 `--pressable*` 主题变量与 9-slice 纹理，观感与原版一致。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec button;
+button.kind    = ComponentKind::Button;
+button.label   = "确定";
+button.variant = "primary";   // primary / secondary / neutral / destructive
+button.style   = "normal";    // normal / elevated
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, button);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Button` |
+| `label` | `string` | 按钮文字 |
+| `variant` | `string` | 视觉变体（见下表） |
+| `style` | `string` | `normal`（普通）或 `elevated`（凸起） |
+| `disabled` | `bool` | 是否禁用 |
+| `state` | `string` | 交互状态：`default` / `hovered` / `focused` / `pressed` / `disabled` |
+| `events` | `vector<string>` | 声明的事件（`"click"`） |
+| `children` | `vector<ComponentSpec>` | 子组件（当 `label` 为空时渲染） |
+
+## 变体
+
+| 变体 | 用途 | 建议 |
+| --- | --- | --- |
+| `primary` | 主操作，推进流程 | 每个上下文 1 个 |
+| `secondary` | 次要操作 | 可多个 |
+| `neutral` | 中性操作 | 默认 |
+| `destructive` | 危险操作（删除、清空） | 按需 |
+
+### 风格
+
+| 风格 | 说明 |
+| --- | --- |
+| `normal` | 普通平面按钮 |
+| `elevated` | 凸起按钮，视觉更突出 |
+
+## 交互状态
+
+按钮自动支持 hover / focus / press 状态切换（运行时通过 `stateStyles` 交换 cssText）：
+
+```cpp
+button.state = "pressed";  // 手动指定按下状态
+button.disabled = true;    // 禁用（等价于 state=disabled）
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

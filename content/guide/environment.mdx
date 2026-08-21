@@ -1,0 +1,416 @@
+# 在你的模组中使用 DearOreUI
+
+> DearOreUI 是一个运行在 Minecraft 基岩版客户端里的 **UI 运行时**。它替你把界面画到游戏里：你的 Mod 只需要告诉它"我想显示什么"，剩下的注入、渲染、生命周期全部由它负责。这一页是完整的集成指南。
+
+---
+
+## 目录
+
+- [它和你的 Mod 是什么关系](#它和你的-mod-是什么关系)
+- [前置条件](#前置条件)
+- [第一步：声明依赖](#第一步声明依赖)
+- [第二步：引入 API](#第二步引入-api)
+- [第三步：获取 API 入口](#第三步获取-api-入口)
+- [第四步：注册你的第一个 UI](#第四步注册你的第一个-ui)
+- [第五步：验证与排查](#第五步验证与排查)
+- [进阶：使用组件库](#进阶使用组件库)
+- [进阶：注册资源与脚本](#进阶注册资源与脚本)
+- [进阶：Host 方法（C++ ↔ JS 双向调用）](#进阶host-方法c--js-双向调用)
+- [生命周期与注销](#生命周期与注销)
+- [常见问题 FAQ](#常见问题-faq)
+- [下一步](#下一步)
+
+---
+
+## 它和你的 Mod 是什么关系
+
+你的 Mod 是**使用者**，DearOreUI 是**服务方**：
+
+```text
+你的 Mod（LeviLamina 原生模组）
+   │  调用 DearOreUI 的 API：注册 UI / 资源 / Host 方法
+   ▼
+DearOreUI（运行时）
+   │  负责：注入脚本 → 渲染 DOM → 显示到 OreUI 页面
+   ▼
+游戏画面
+```
+
+关键点：
+
+- **你不需要懂引擎内部**。cohtml、Hook、vtable、ExecuteScript 这些是 DearOreUI 内部的事，你的代码永远不碰它们。
+- **你的 Mod 不直接操作游戏 UI**。你只做"声明"（注册），DearOreUI 做"执行"（渲染）。
+- **多 Mod 共存**。多个 Mod 可以同时使用 DearOreUI，运行时负责冲突检测和依赖排序，不会互相覆盖。
+
+## 前置条件
+
+在开始之前，确认你的环境满足以下条件：
+
+| 条件 | 要求 | 说明 |
+| --- | --- | --- |
+| 加载器 | LeviLamina 26.10.x（客户端） | DearOreUI 以 LeviLamina 原生模组形式加载 |
+| 平台 | Windows x64 | 当前唯一目标平台 |
+| 语言 | C++20 | 原生 Mod，使用 Clang-CL 编译 |
+| 构建工具 | xmake | 与 DearOreUI 相同的构建链 |
+| 页面范围 | OreUI 技术栈页面 | 如世界列表页 `/play/all`；主菜单 / 世界内是 JsonUI，暂不支持 |
+
+> [!NOTE]
+> 兼容性是多维度条件，不能只看 Minecraft 版本。每条验证记录必须包含：Minecraft 版本、LeviLamina 版本、DearOreUI 版本、Windows 版本与架构、OreUI 资源指纹、Hook 状态、诊断 ID 和验证证据。
+
+## 第一步：声明依赖
+
+在 `tooth.json` 中声明 DearOreUI 为依赖：
+
+```json
+{
+    "format_version": 3,
+    "tooth": "github.com/your-name/your-mod",
+    "version": "1.0.0",
+    "info": {
+        "name": "Your Mod",
+        "description": "A mod that uses DearOreUI",
+        "tags": ["platform:levilamina", "type:mod"]
+    },
+    "variants": [
+        {
+            "label": "client",
+            "platform": "win-x64",
+            "dependencies": {
+                "github.com/DearOreUI/DearOreUI": "0.1.*"
+            }
+        }
+    ]
+}
+```
+
+### 版本约束说明
+
+| 写法 | 含义 |
+| --- | --- |
+| `"0.1.*"` | 匹配 0.1.x 任意补丁版本（推荐，兼容补丁更新） |
+| `"0.1.0"` | 精确锁定 0.1.0 |
+| `">=0.1.0"` | 大于等于 0.1.0 |
+
+> [!TIP]
+> 推荐使用 `0.1.*`。DearOreUI 遵循语义化版本：补丁版本（第三位）只修 bug，不破坏 API；主/次版本升级可能引入破坏性变更。
+
+## 第二步：引入 API
+
+在你的 Mod 源码中引入 DearOreUI 的公开头文件：
+
+```cpp
+#include "ll/api/mod/RegisterHelper.h"   // LeviLamina 的 Mod 注册宏
+#include "api/IDearOreUIApi.h"           // 统一 API 入口
+#include "api/manifest/ModManifest.h"    // Mod 身份声明
+#include "api/manifest/UiManifest.h"     // UI 声明
+#include "api/manifest/ResourceManifest.h" // 资源声明（可选）
+#include "api/manifest/ScriptManifest.h"   // 脚本声明（可选）
+#include "api/manifest/StyleSheetManifest.h" // 样式声明（可选）
+
+using namespace dearoreui::api;
+```
+
+### 头文件速查
+
+| 头文件 | 内容 | 何时需要 |
+| --- | --- | --- |
+| `IDearOreUIApi.h` | 统一入口，聚合全部能力 | 总是需要 |
+| `ModManifest.h` | Mod 身份（id / 命名空间 / 版本 / 依赖） | 总是需要 |
+| `UiManifest.h` | UI 声明（类型 / 位置 / 范围 / 指纹） | 注册 UI 时需要 |
+| `ResourceManifest.h` | 资源文件声明 | 注册资源时需要 |
+| `ScriptManifest.h` | JS 脚本声明 | 注册脚本时需要 |
+| `StyleSheetManifest.h` | CSS 样式声明 | 注册样式时需要 |
+
+## 第三步：获取 API 入口
+
+`IDearOreUIApi` 是统一入口，聚合了五组能力：
+
+| 能力组 | 接口 | 职责 |
+| --- | --- | --- |
+| 运行时查询 | `IRuntimeApi` | `getInfo` / `getCapabilities` / `checkSupport` / `isReady` |
+| Mod 生命周期 | `IModApi` | `registerMod` / `unregisterMod` / `setModEnabled` |
+| 资源注册 | `IResourceApi` | `registerResource` / `registerScript` / `registerStyleSheet` |
+| UI 挂载 | `IUiApi` | `registerOverlay` / `registerPanel` / `registerButton` / `registerPage` / `registerComponent` |
+| Host 桥接 | `IHostApi` | `registerHostMethod`（带权限白名单） |
+
+### 当前获取方式
+
+```cpp
+// 参考内置 Demo 的获取方式（阶段 8 提供稳定的外部入口）
+auto* oreui = runtime::IRuntime::api();
+```
+
+> [!WARNING]
+> 当前阶段 API 入口还在完善中。上面的写法是参考内置 Demo Overlay 的注册方式——它通过 `runtime::IRuntime::api()` 拿到 `IDearOreUIApi*`。等阶段 8 发布稳定入口后，这里会替换成一行简单的调用。示例代码中的 `oreui` 变量代表这个入口。
+
+## 第四步：注册你的第一个 UI
+
+### 完整示例
+
+```cpp
+bool onLoad() {
+    // 1. 注册你的 Mod 身份（前置条件：资源/UI 注册都要求 Mod 已注册）
+    ModManifest manifest;
+    manifest.id           = ModId{"my-first-ui"};
+    manifest.modNamespace = "my_first_ui";
+    manifest.modVersion   = Version{1, 0, 0};
+
+    auto modResult = oreui->registerMod(manifest);
+    if (modResult.isErr()) {
+        // 注册失败：命名空间冲突、版本校验失败等
+        return false;
+    }
+
+    // 2. 声明一个居中显示的悬浮层
+    UiManifest ui;
+    ui.modNamespace = "my_first_ui";
+    ui.id           = "hello";
+    ui.kind         = UiKind::Overlay;   // 悬浮层（不占页面布局）
+    ui.anchor       = UiAnchor::Center;  // 居中
+    ui.pageScopes   = {PageScope::Any};  // 所有 OreUI 页面都显示
+    ui.fingerprint  = "hello-overlay-v1"; // 冲突检测指纹
+
+    // 3. 注册它，内容是一段 HTML
+    auto uiResult = oreui->registerOverlay(
+        ModId{"my-first-ui"},
+        ui,
+        "<div>Hello, DearOreUI!</div>"
+    );
+
+    return uiResult.isOk();
+}
+
+LL_REGISTER_MOD(MyMod, onLoad);
+```
+
+### 这段代码在做什么
+
+| 步骤 | 大白话 | 为什么必须 |
+| --- | --- | --- |
+| `registerMod` | 告诉 DearOreUI"我是谁" | 不注册身份，后面所有操作都会被拒绝 |
+| `UiManifest` | 描述"我想显示什么" | 类型、位置、范围都要先声明 |
+| `registerOverlay` | 把 UI 交给 DearOreUI | 它拿到后负责渲染到游戏里 |
+
+### ModManifest 字段详解
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `id` | `ModId` | Mod 唯一标识，全局唯一 |
+| `modNamespace` | `string` | 命名空间，用于资源路径隔离（如 `my_first_ui`） |
+| `modVersion` | `Version` | Mod 版本号 |
+| `dependencies` | `vector<Dependency>` | 依赖声明（可选） |
+
+### UiManifest 字段详解
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `modNamespace` | `string` | 必须与 Mod 的命名空间一致 |
+| `id` | `string` | UI 唯一标识 |
+| `kind` | `UiKind` | 类型：`Overlay` / `Panel` / `Button` / `Page` |
+| `pageScopes` | `vector<PageScope>` | 显示范围：`Any` 或指定页面 |
+| `anchor` | `UiAnchor` | 位置：`Center` / `TopLeft` / `TopRight` 等 |
+| `fingerprint` | `string` | 冲突检测指纹，变更 UI 时更新 |
+
+### UI 类型速查
+
+| 类型 | 用途 | 示例 |
+| --- | --- | --- |
+| `Overlay` | 悬浮层，不占页面布局 | 提示框、弹窗、HUD 元素 |
+| `Panel` | 面板，承载内容 | 设置面板、信息面板 |
+| `Button` | 按钮 | 快捷操作按钮 |
+| `Page` | 整页替换 | 自定义页面 |
+
+## 第五步：验证与排查
+
+启动游戏，进入世界列表页（`/play/all`）。如果看到居中的 "Hello, DearOreUI!"，链路就通了。
+
+### 排查表
+
+| 现象 | 可能原因 | 处理 |
+| --- | --- | --- |
+| 日志里没有 `ready` 事件 | 没捕获到 OreUI 页面，或 LeviLamina 版本不符 | 确认版本，检查日志 |
+| 有 `ready` 但没显示 | 当前页面不是 OreUI 技术栈 | 进入 `/play/all` 等 OreUI 页面 |
+| 样式不对 | cohtml 丢弃 HTML 内联 `style` 属性 | 改用 CSS 类或运行时设置样式 |
+| 注册报错 | 命名空间冲突或校验失败 | 看 `modResult.error()` / `uiResult.error()` |
+| 多个 Mod 冲突 | 指纹或命名空间重复 | 更新 `fingerprint`，检查命名空间 |
+
+### 诊断文件
+
+所有注册、计划、注入事件都会写入 `diagnostics.jsonl` 诊断文件：
+
+```text
+{"id":"...","timestamp":"...","severity":"info","category":"ui",
+ "modId":"my-first-ui","pageId":"/play/all","errorCode":"", ...}
+```
+
+排查问题时**先看诊断文件**，不靠猜。日志中的 `DearOreUI data dir:` 一行会告诉你文件位置。
+
+## 进阶：使用组件库
+
+不想手写 HTML？可以用组件规格（`ComponentSpec`）描述界面，DearOreUI 会渲染成原版风格：
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+// 一个面板，里面放一行标题和一个按钮
+ComponentSpec panel;
+panel.kind  = ComponentKind::Panel;
+panel.label = "DearOreUI";
+
+ComponentSpec text;
+text.kind    = ComponentKind::Text;
+text.variant = "heading";
+text.label   = "DEMO";
+
+ComponentSpec button;
+button.kind    = ComponentKind::Button;
+button.variant = "primary";
+button.label   = "OK";
+
+panel.children.push_back(text);
+panel.children.push_back(button);
+
+oreui->registerComponent(ModId{"my-first-ui"}, uiManifest, panel);
+```
+
+### ComponentSpec 字段详解
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 组件类型（14 种枚举） |
+| `label` | `string` | 主文本（按钮文字 / 面板标题 / 输入框提示） |
+| `variant` | `string` | 视觉变体（button: primary/secondary/neutral/destructive） |
+| `style` | `string` | 风格（button: normal/elevated；panel: default/dark/furnace/...） |
+| `disabled` | `bool` | 是否禁用 |
+| `state` | `string` | 交互状态（default/hovered/focused/pressed/disabled） |
+| `events` | `vector<string>` | 声明的事件（"click" / "change"） |
+| `children` | `vector<ComponentSpec>` | 子组件树 |
+| `body` | `vector<DomNode>` | 原始 DOM 内容（panel/card 正文） |
+
+### 14 种组件
+
+| 类别 | 组件 |
+| --- | --- |
+| 基础交互 | 按钮 Button、输入框 Input |
+| 布局容器 | 面板 Panel、卡片 Card、分隔线 Divider、容器槽 ContainerSlot |
+| 数据展示 | 文本 Text、列表项 ListItem、按键图标 KeyIcon、气泡 Bubble |
+| 导航 | 标签栏 TabBar、筛选栏 FilterBar |
+| 反馈 | 提示框 Tooltip、进度条 Progress |
+
+每个组件的详细用法见[组件总览](../components/overview)。
+
+## 进阶：注册资源与脚本
+
+除了 UI，你还可以注册资源、脚本和样式，让它们随页面一起注入：
+
+```cpp
+// 注册一个资源文件（如图片）
+ResourceManifest res;
+res.modNamespace = "my_first_ui";
+res.path         = "assets/logo.png";
+res.type         = ResourceType::Image;
+
+oreui->registerResource(ModId{"my-first-ui"}, res, imageData);
+
+// 注册一个 JS 脚本
+ScriptManifest script;
+script.modNamespace = "my_first_ui";
+script.path         = "scripts/main.js";
+
+oreui->registerScript(ModId{"my-first-ui"}, script, "console.log('hello');");
+
+// 注册一个 CSS 样式
+StyleSheetManifest css;
+css.modNamespace = "my_first_ui";
+css.path         = "styles/main.css";
+
+oreui->registerStyleSheet(ModId{"my-first-ui"}, css, ".my-class { color: red; }");
+```
+
+## 进阶：Host 方法（C++ ↔ JS 双向调用）
+
+想让页面里的 JS 调用你的 C++ 代码？注册一个 Host 方法：
+
+```cpp
+#include "ipc/IHostMethod.h"
+
+class MyMethod : public ipc::IHostMethod {
+public:
+    std::string name() const override { return "myMod.greet"; }
+
+    // 处理 JS 调用，返回 JSON 字符串
+    std::string invoke(std::string const& args) override {
+        return R"({"message":"Hello from C++!"})";
+    }
+};
+
+// 注册 Host 方法，带权限白名单
+oreui->registerHostMethod(
+    ModId{"my-first-ui"},
+    PermissionSet{"host.read_only"},   // 需要的权限
+    std::make_shared<MyMethod>()
+);
+```
+
+页面 JS 里就可以调用：
+
+```js
+// 页面脚本中调用 C++ 方法
+const result = await DearOreUI.call("myMod.greet", {});
+console.log(result.message); // "Hello from C++!"
+```
+
+> [!NOTE]
+> Host 方法注册时强制校验权限白名单。9 项权限包括 `resource.read` / `resource.register` / `page.observe` / `ui.mount` / `host.read_only` / `host.write` / `transform.resource` / `transform.bundle` / `diagnostic.read`。
+
+## 生命周期与注销
+
+每个注册操作都返回一个 `RegistrationHandle`，你可以用它注销：
+
+```cpp
+// 保存句柄
+auto handle = oreui->registerOverlay(ModId{"my-first-ui"}, ui, html);
+
+// 需要时注销
+oreui->unregisterUi(handle);
+oreui->unregisterMod(ModId{"my-first-ui"});
+```
+
+| 操作 | 方法 | 说明 |
+| --- | --- | --- |
+| 注销 UI | `unregisterUi(handle)` | 移除已注册的 UI |
+| 注销资源 | `unregister(handle)` | 移除已注册的资源/脚本/样式 |
+| 注销 Host 方法 | `unregisterHostMethod(handle)` | 移除已注册的 Host 方法 |
+| 注销 Mod | `unregisterMod(id)` | 移除整个 Mod 及其全部注册 |
+
+> [!TIP]
+> Mod 禁用、页面销毁或 Runtime 关闭时，DearOreUI 会自动清理相关注册、监听、请求和页面资源，卸载无悬挂。你不需要手动清理，但显式注销可以立即释放。
+
+## 常见问题 FAQ
+
+**Q: 我的 Mod 需要懂 OreUI 内部吗？**
+A: 不需要。你只做声明式注册，cohtml / Hook / vtable 的复杂性由运行时承担。
+
+**Q: 多个 Mod 都用 DearOreUI，会打架吗？**
+A: 不会。统一注册表 + 依赖排序 + 冲突检测 + 变换计划，冲突显式报错而非静默覆盖。
+
+**Q: 我在主菜单 / 世界内看不到 UI？**
+A: 那些是 JsonUI 技术栈，不在当前覆盖范围。DearOreUI 只覆盖 OreUI 技术栈页面（如 `/play/all`）。
+
+**Q: 支持哪个 Minecraft 版本？**
+A: 目标 LeviLamina 26.10.x / Bedrock 26.10.x / Windows x64，能力矩阵与版本探测保证兼容性有据可依。
+
+**Q: 这会修改我的游戏安装目录吗？**
+A: 不会。DearOreUI 完全运行时注入，不写游戏安装目录、不改原版资源。模组数据（诊断等）输出到 LeviLamina 数据目录。
+
+**Q: 我的 UI 没显示，怎么排查？**
+A: 先看 `diagnostics.jsonl` 诊断文件。日志中的 `DearOreUI data dir:` 一行会告诉你文件位置。
+
+## 下一步
+
+- [快速入门](./getting-started) —— 10 分钟跑通第一个 Overlay
+- [组件总览](../components/overview) —— 14 种原版风格组件
+- [设计原则](./design-principles) —— 为什么 DearOreUI 的 API 长这样
+- [给 AI 开发者的契约](../handbook/agent-ui) —— 渐进式 API 与能力矩阵详解

@@ -1,0 +1,59 @@
+# 卡片 Card
+
+> detailedCard 卡片，用于展示可交互的内容块。复用原版 `--detailedCard*` 主题变量，支持 base / action / additionalAction 三种变体。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec card;
+card.kind    = ComponentKind::Card;
+card.variant = "action";      // base / action / additionalAction
+
+ComponentSpec title;
+title.kind    = ComponentKind::Text;
+title.variant = "heading";
+title.label   = "我的卡片";
+card.children.push_back(title);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, card);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Card` |
+| `variant` | `string` | `base` / `action` / `additionalAction` |
+| `state` | `string` | 交互状态：`default` / `hovered` / `pressed` / `focused` / `pressedFocused` / `disabled` / `disabledFocused` |
+| `children` | `vector<ComponentSpec>` | 子组件 |
+| `body` | `vector<DomNode>` | 原始 DOM 内容 |
+
+## 变体
+
+| 变体 | 说明 |
+| --- | --- |
+| `base` | 基础卡片（无交互纹理） |
+| `action` | 可点击卡片（支持 hover / press / focus 状态） |
+| `additionalAction` | 带附加操作的卡片 |
+
+## 交互状态
+
+`action` / `additionalAction` 变体自动支持完整状态切换：
+
+```cpp
+card.variant = "action";
+card.state   = "hovered";   // 手动指定悬停状态
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

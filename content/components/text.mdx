@@ -1,0 +1,45 @@
+# 文本 Text
+
+> 文本节点，支持多种排版变体。复用原版字体族（Minecraft Ten / Five / Seven v2 / Noto Sans）与字号刻度。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec text;
+text.kind    = ComponentKind::Text;
+text.variant = "heading";   // heading / subheading / body / muted / tiny
+text.label   = "Hello, DearOreUI!";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, text);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Text` |
+| `label` | `string` | 文本内容 |
+| `variant` | `string` | 排版变体（见下表） |
+
+## 变体
+
+| 变体 | 字体 | 字号 | 颜色 |
+| --- | --- | --- | --- |
+| `heading` | Minecraft Ten v2 | 32px（Heading） | 白色 |
+| `subheading` | Minecraft Five v2 | 20px（Large） | 白色 |
+| `body` | Minecraft Seven v2 | 16px（Medium） | 白色 |
+| `muted` | Noto Sans | 14px（Small） | 灰色（Muted） |
+| `tiny` | Minecraft Seven v2 | 10px（Tiny） | 白色 |
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

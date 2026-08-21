@@ -1,0 +1,42 @@
+# 分隔线 Divider
+
+> 表单分隔线，用于分隔内容区块。复用原版 `--formDivider*` 主题变量（modalForm 作用域）：深色上边框 + 浅色下边框的细线。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec divider;
+divider.kind = ComponentKind::Divider;
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, divider);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Divider` |
+
+分隔线没有其他可配置字段，直接使用即可。
+
+## 渲染结构
+
+```text
+<div data-component="divider">        ← 0.4rem 高
+  border-top: 0.2rem solid rgba(0,0,0,0.3)      ← 深色上边框
+  border-bottom: 0.2rem solid rgba(255,255,255,0.1)  ← 浅色下边框
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

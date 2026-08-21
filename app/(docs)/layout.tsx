@@ -1,6 +1,5 @@
-import { Footer, Layout, Navbar } from "nextra-theme-docs";
 import { getPageMap } from "nextra/page-map";
-import { docsRepositoryBase, footerText, logo, projectLink } from "../../theme.config";
+import DocsLayoutClient from "./docs-layout-client";
 
 export default async function DocsLayout({
     children,
@@ -8,14 +7,5 @@ export default async function DocsLayout({
     children: React.ReactNode;
 }) {
     const pageMap = await getPageMap();
-    return (
-        <Layout
-            navbar={<Navbar logo={logo} projectLink={projectLink} />}
-            pageMap={pageMap}
-            docsRepositoryBase={docsRepositoryBase}
-            footer={<Footer>{footerText}</Footer>}
-        >
-            {children}
-        </Layout>
-    );
+    return <DocsLayoutClient pageMap={pageMap}>{children}</DocsLayoutClient>;
 }

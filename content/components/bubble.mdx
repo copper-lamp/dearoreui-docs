@@ -1,0 +1,51 @@
+# 气泡 Bubble
+
+> 气泡提示，用于消息、通知等场景。复用原版 `--bubble*` 主题变量，支持 base / action 两种变体。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec bubble;
+bubble.kind    = ComponentKind::Bubble;
+bubble.variant = "base";      // base / action
+bubble.label   = "新消息";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, bubble);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Bubble` |
+| `label` | `string` | 气泡文本 |
+| `variant` | `string` | `base` / `action` |
+| `children` | `vector<ComponentSpec>` | 子组件（当 `label` 为空时渲染） |
+
+## 变体
+
+| 变体 | 说明 |
+| --- | --- |
+| `base` | 基础气泡 |
+| `action` | 可操作气泡 |
+
+## 渲染结构
+
+```text
+<div data-component="bubble">         ← 9-slice 纹理背景 + inline-block
+  <span>新消息</span>                  ← 文本（Minecraft Seven v2, Small）
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

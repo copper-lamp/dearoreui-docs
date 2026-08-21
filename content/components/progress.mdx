@@ -1,0 +1,58 @@
+# 进度条 Progress
+
+> 进度指示，用于熔炉等进度场景。复用原版 `--progressRadial*` / `--progressLinear*` 主题变量与 keyframes 动画，支持径向（熔炼环）与线性（燃料火焰）两种形态。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+// 径向进度（熔炼环，默认）
+ComponentSpec radial;
+radial.kind    = ComponentKind::Progress;
+radial.variant = "radial";
+
+// 线性进度（燃料火焰）
+ComponentSpec linear;
+linear.kind    = ComponentKind::Progress;
+linear.variant = "linear";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, radial);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Progress` |
+| `variant` | `string` | `radial`（默认）/ `linear` |
+
+## 变体
+
+| 变体 | 说明 | 动画 |
+| --- | --- | --- |
+| `radial` | 径向熔炼环（2.6rem × 2.6rem） | `steps(9)` 逐帧旋转 |
+| `linear` | 线性燃料火焰（3.8rem × 3.8rem） | `steps(1)` 逐帧切换 |
+
+## 渲染结构
+
+```text
+<div data-component="progress">       ← 相对定位容器
+  <div>背景纹理</div>                  ← 9-slice 背景
+  <div>填充纹理</div>                  ← 9-slice 填充 + keyframes 动画
+</div>
+```
+
+> [!NOTE]
+> 动画 keyframes（clip-path 多边形）由页面已加载的 gameplay-theme 提供，渲染器直接引用动画名，无需额外资源。
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

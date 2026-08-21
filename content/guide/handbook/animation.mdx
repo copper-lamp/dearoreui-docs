@@ -1,0 +1,31 @@
+# 动画
+
+> DearOreUI 的动画复用原版 OreUI 的 keyframes 动画变量。组件渲染器直接引用动画名，无需额外资源。
+
+## 进度条动画
+
+进度条组件（`ComponentKind::Progress`）使用原版 gameplay-theme 提供的 keyframes：
+
+| 变体 | 动画 | 说明 |
+| --- | --- | --- |
+| `radial` | `animation-249c45b` | 径向熔炼环，`steps(9)` 逐帧旋转 |
+| `linear` | `animation--2c0f9be3` | 线性燃料火焰，`steps(1)` 逐帧切换 |
+
+```cpp
+ComponentSpec progress;
+progress.kind    = ComponentKind::Progress;
+progress.variant = "radial";
+```
+
+> [!NOTE]
+> 动画 keyframes（clip-path 多边形）由页面已加载的 gameplay-theme 提供，渲染器直接引用动画名，无需额外资源。
+
+## 动画约束
+
+- 动画 keyframes 由原版页面加载，组件库不打包动画资源。
+- 动画通过 `element.style.cssText` 设置 `animation` 属性（见[造型](./styling)）。
+
+## 相关
+
+- [造型](./styling) —— 样式通道
+- [进度条组件](../components/progress) —— 进度条用法

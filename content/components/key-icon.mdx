@@ -1,0 +1,55 @@
+# 按键图标 KeyIcon
+
+> 键盘 / 鼠标按键图标，用于显示快捷键提示。复用原版 `--buttonIcon*` 主题变量与键盘图标纹理（A-Z、F1-F12、方向键、修饰键、鼠标键等）。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec key;
+key.kind  = ComponentKind::KeyIcon;
+key.label = "A";            // 按键名：A-Z、F1-F12、方向键、Enter/Esc/Shift/Ctrl/Alt/Space/Tab、鼠标键等
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, key);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::KeyIcon` |
+| `label` | `string` | 按键名（见下表） |
+
+## 支持的按键
+
+| 类别 | 按键 |
+| --- | --- |
+| 字母 | A-Z |
+| 功能键 | F1-F12 |
+| 方向键 | 上 / 下 / 左 / 右 |
+| 修饰键 | Enter / Esc / Shift / Ctrl / Alt / Space / Tab |
+| 鼠标 | 左键 / 右键 / 中键 |
+
+> [!NOTE]
+> 未知按键名渲染为空（不输出任何 DOM）。
+
+## 渲染结构
+
+```text
+<div data-component="keyIcon">        ← 键帽 9-slice 纹理
+  <div>                               ← 按键字形（background-image + 尺寸）
+  </div>
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

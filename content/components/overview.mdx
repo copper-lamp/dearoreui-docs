@@ -1,0 +1,81 @@
+# 组件总览
+
+> DearOreUI 组件库覆盖 Minecraft 基岩版 OreUI 设计系统的全部原子组件。每个组件由 `component::ComponentSpec` 描述，经 `ComponentRenderer` 渲染为 `render::DomNode` 树，与普通 Overlay 走同一条 CSSOM 渲染管线。
+
+## 基础交互
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [按钮 Button](./button) | 可点击的 pressable 按钮 | primary / secondary / neutral / destructive × normal / elevated |
+| [输入框 Input](./input) | 文本输入框（inputLegend） | hint 提示文本 |
+
+## 布局容器
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [面板 Panel](./panel) | 容器面板，可承载标题/关闭/装饰 | default / dark / furnace / chest / enderChest / shulkerBox / barrel / modalForm |
+| [卡片 Card](./card) | detailedCard 卡片 | base / action / additionalAction |
+| [分隔线 Divider](./divider) | 表单分隔线 | — |
+| [容器槽 ContainerSlot](./container-slot) | 物品槽 | default / highlight / touchSelection + 容器色调 |
+
+## 数据展示
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [文本 Text](./text) | 文本节点 | heading / body / hint 等 |
+| [列表项 ListItem](./list-item) | 列表条目 | base / action / additionalAction |
+| [按键图标 KeyIcon](./key-icon) | 键盘/鼠标按键图标 | A-Z、F1-F12、方向键、修饰键 |
+| [气泡 Bubble](./bubble) | 气泡提示 | base / action |
+
+## 导航
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [标签栏 TabBar](./tab-bar) | 标签页导航 | neutral |
+| [筛选栏 FilterBar](./filter-bar) | 筛选条件栏 | base / action |
+
+## 反馈
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [提示框 Tooltip](./tooltip) | 悬浮文本提示 | — |
+| [进度条 Progress](./progress) | 进度指示 | radial / linear |
+
+## 主题
+
+| 页面 | 说明 |
+| --- | --- |
+| [主题令牌 Theme](./theme) | 颜色 / 字体 / 字号 / 纹理令牌 |
+
+## 组件规格（ComponentSpec）
+
+所有组件共享同一个声明式规格结构（[ComponentSpec.h](https://github.com/DearOreUI/DearOreUI/blob/main/src/component/ComponentSpec.h)）：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 组件类型（14 种枚举） |
+| `label` | `string` | 主文本（按钮文字 / 面板标题 / 输入框提示） |
+| `variant` | `string` | 视觉变体（button: primary/secondary/neutral/destructive） |
+| `style` | `string` | 风格（button: normal/elevated；panel: default/dark/furnace/...） |
+| `disabled` | `bool` | 是否禁用 |
+| `state` | `string` | 交互状态（default/hovered/focused/pressed/disabled） |
+| `events` | `vector<string>` | 声明的事件（"click" / "change"） |
+| `children` | `vector<ComponentSpec>` | 子组件树 |
+| `body` | `vector<DomNode>` | 原始 DOM 内容（panel/card 正文） |
+
+## 渲染链路
+
+```text
+ComponentSpec 树
+   │  ComponentRenderer（消费主题令牌）
+   ▼
+render::DomNode 树
+   │  通用 CSSOM 渲染器（与 Overlay 同管线）
+   ▼
+cohtml::View::ExecuteScript → 真实 OreUI 页面渲染
+```
+
+## 下一步
+
+- 查看 [主题令牌](./theme) 了解可用的颜色 / 字体 / 纹理
+- 查看 [快速开始](../guide/getting-started) 了解如何注册第一个组件
