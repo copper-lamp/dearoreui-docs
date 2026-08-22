@@ -21,11 +21,11 @@
 - Showcase：52 children、14 scripts、malformed_scripts=0、at_risk_count=0。
 - `DearOreUIUnitTests` 全绿。
 
-真机展示：搭载组合组件（stack / modal / menu / listItem 拼装）的 showcase 已在目标客户端完整显示。详细验收矩阵见 [阶段 8 真实客户端验证](https://github.com/DearOreUI/Docs)。
+真机展示：搭载组合组件（stack / modal / menu / listItem 拼装）的 showcase 已在目标客户端完整显示。详细验收矩阵见 `Docs/DearOreUI-阶段8-真实客户端验证.md`。
 
 ## 示例 Mod（dearoreui-ExampleMod）
 
-[dearoreui-ExampleMod](https://github.com/DearOreUI/dearoreui-ExampleMod) 是一个完整的外部 Mod 示例，演示：
+[dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) 是一个完整的外部 Mod 示例，演示：
 
 - **桥接接入**：`DearOreUI_QueryApi` 获取 API 入口，带就绪重试（20 次轮询，10 秒窗口）。
 - **状态中心**：`StateCenter` 注册 UI + 资源 + Host 方法 + 事件订阅。
@@ -48,7 +48,7 @@ mStateCenter->registerAll();
 ## 在自己的 Mod 里复现
 
 1. 按[安装与构建](./installation) 部署 DearOreUI。
-2. 参考 [ExampleMod](https://github.com/DearOreUI/dearoreui-ExampleMod) 搭工程。
+2. 参考 [ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) 搭工程。
 3. 按[快速开始](./getting-started) 注册第一个 Overlay。
 4. 按[在你的模组中使用](./environment) 接入组件库与 Host 方法。
 

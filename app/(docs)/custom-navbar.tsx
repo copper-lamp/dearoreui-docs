@@ -38,7 +38,7 @@ export default function CustomNavbar() {
                             pathname === link.href ||
                             (link.href !== "/" && pathname.startsWith(link.href));
                         return (
-                            <a
+                            <NextLink
                                 key={link.href}
                                 href={link.href}
                                 className={
@@ -49,7 +49,7 @@ export default function CustomNavbar() {
                                 }
                             >
                                 {link.label}
-                            </a>
+                            </NextLink>
                         );
                     })}
                 </div>

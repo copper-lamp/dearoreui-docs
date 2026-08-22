@@ -4,7 +4,7 @@
 
 ## 运行时构建与发布
 
-发布版从 [Releases](https://github.com/DearOreUI/DearOreUI/releases) 下载，产物是 `DearOreUI-windows-x64.zip`（内含 `DearOreUI.dll`）。
+发布版从 [Releases](https://github.com/copper-lamp/Dear-OreUI/releases) 下载，产物是 `DearOreUI-windows-x64.zip`（内含 `DearOreUI.dll`）。
 
 需要改源码时本地构建，工具链要求：
 
@@ -16,7 +16,7 @@
 | LeviLamina | 26.10.x 客户端开发包 |
 
 ```powershell
-git clone https://github.com/DearOreUI/DearOreUI.git
+git clone https://github.com/copper-lamp/Dear-OreUI.git
 cd DearOreUI
 xmake repo -u
 xmake f -a x64 -m release -p windows --target_type=client -y
@@ -31,14 +31,14 @@ xmake -v -y
 
 外部 Mod 通过 DearOreUI 公开 API 集成。两种接入方式：
 
-1. **纯 C bridge 导出**（推荐）：`DearOreUI_QueryApi`，不链接 import library，运行时探测；示例见 [dearoreui-ExampleMod](https://github.com/DearOreUI/dearoreui-ExampleMod) 的 `loadBridge()`。
+1. **纯 C bridge 导出**（推荐）：`DearOreUI_QueryApi`，不链接 import library，运行时探测；示例见 [dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) 的 `loadBridge()`。
 2. **C++ 头文件**：`#include "api/IDearOreUIApi.h"` 等公开头，需要 `DearOreUI` 的头文件与依赖。
 
 在 `tooth.json` 声明依赖：
 
 ```json
 "dependencies": {
-    "github.com/DearOreUI/DearOreUI": "0.1.*"
+    "github.com/copper-lamp/Dear-OreUI": "0.1.*"
 }
 ```
 

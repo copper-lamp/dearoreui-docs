@@ -1,3 +1,5 @@
+import Link from "next/link";
+
 const GITHUB = "https://github.com/DearOreUI/DearOreUI";
 const DESIGNER = "https://github.com/DearOreUI/Designer";
 const DOCS_REPO = "https://github.com/DearOreUI/Docs";
@@ -225,13 +227,13 @@ export default function HomePage() {
                         <a className="dear-nav__brand" href="#top">DearOreUI</a>
                         <nav className="dear-nav__links" aria-label="主导航">
                             <a className="is-active" href="#top">首页</a>
-                            <a href="/guide/introduction">入门指南</a>
-                            <a href="/components/overview">组成部分</a>
-                            <a href="/releases">发行作品</a>
+                            <Link href="/guide/introduction">入门指南</Link>
+                            <Link href="/components/overview">组成部分</Link>
+                            <Link href="/releases">发行作品</Link>
                         </nav>
                         <div className="dear-nav__right">
                             <a className="dear-nav__github" href={GITHUB} aria-label="GitHub 仓库"><GitHubIcon /></a>
-                            <a className="dear-nav__cta" href="/guide/getting-started">开始使用</a>
+                            <Link className="dear-nav__cta" href="/guide/getting-started">开始使用</Link>
                         </div>
                     </div>
                 </header>
@@ -244,7 +246,7 @@ export default function HomePage() {
                         <h1 className="dear-hero__title">为 OreUI 而生。<span>为创作而定制。</span></h1>
                         <p className="dear-hero__lead">一个原生、开放且可扩展的 OreUI 运行时，让你快速探索界面结构，连接设计与游戏内体验。</p>
                         <div className="dear-hero__actions">
-                            <a className="dear-btn dear-btn--primary" href="/guide/getting-started">开始使用</a>
+                            <Link className="dear-btn dear-btn--primary" href="/guide/getting-started">开始使用</Link>
                             <a className="dear-btn" href={DOCS_REPO}>查看文档</a>
                         </div>
                         <div className="dear-hero__swatches" aria-hidden="true">
