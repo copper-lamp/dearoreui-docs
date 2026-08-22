@@ -1,5 +1,13 @@
 import "nextra-theme-docs/style.css";
 
+import type { Metadata } from "next";
+
+export const metadata: Metadata = {
+    icons: {
+        icon: "/images/icon_s.png",
+    },
+};
+
 export default function RootLayout({
     children,
 }: {

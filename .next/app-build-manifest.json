@@ -31,7 +31,7 @@
       "static/chunks/424-26d7038c52a95b75.js",
       "static/chunks/433-c05ef6cc1c634825.js",
       "static/chunks/69-8efe492bf26c0740.js",
-      "static/chunks/app/(docs)/layout-50414bade60bec6b.js"
+      "static/chunks/app/(docs)/layout-2fc54be4bb748b03.js"
     ],
     "/(docs)/[...mdxPath]/page": [
       "static/chunks/webpack-2d7ee9f64db9c2cc.js",
@@ -40,7 +40,7 @@
       "static/chunks/main-app-642917277c07dfd3.js",
       "static/chunks/424-26d7038c52a95b75.js",
       "static/chunks/433-c05ef6cc1c634825.js",
-      "static/chunks/app/(docs)/[...mdxPath]/page-fb6dfcf9057fa4ae.js"
+      "static/chunks/app/(docs)/[...mdxPath]/page-ea6c357e523fc3f1.js"
     ]
   }
 }

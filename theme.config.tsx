@@ -1,7 +1,15 @@
 import type { ReactNode } from "react";
 
 /** 站点 Logo（Navbar 使用） */
-export const logo: ReactNode = <span>DearOreUI</span>;
+export const logo: ReactNode = (
+    <img
+        src="/images/icon_s.png"
+        alt="DearOreUI"
+        height={28}
+        width={28}
+        style={{ objectFit: "contain" }}
+    />
+);
 
 /** 项目仓库链接（Navbar 图标使用） */
 export const projectLink = "https://github.com/DearOreUI/DearOreUI";

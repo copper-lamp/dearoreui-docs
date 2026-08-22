@@ -1,430 +1,603 @@
 # 在你的模组中使用 DearOreUI
 
-> DearOreUI 是一个运行在 Minecraft 基岩版客户端里的 **UI 运行时**。它替你把界面画到游戏里：你的 Mod 只需要告诉它"我想显示什么"，剩下的注入、渲染、生命周期全部由它负责。这一页是完整的集成指南。
+效果展示
+
+![DearOreUI 示例模组效果展示 1](/images/zh-1.png)
+
+![DearOreUI 示例模组效果展示 2](/images/zh-2.png)
+
+在这个教程中，你会逐步创建一个由oreui驱动的日历模组
+
+- 仓库：[magicobs0z/dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod)
+- 课程源码：`src/mod/examples/`
+- 默认课程：`07`，完整日历
+- 课程切换：`bin/my-mod/config.json`
+
+这个仓库有一个很实用的特点：01 到 07 不是七个互不相干的 Demo，而是一条逐步增加能力的路线。先连接运行时，再注册组件、注入页面脚本、接收 C++ 事件、订阅帧服务，最后组合成一个可以新增和删除事件的日历。
 
 ---
 
-## 目录
+## 先看清楚：DearOreUI 负责什么
 
-- [它和你的 Mod 是什么关系](#它和你的-mod-是什么关系)
-- [前置条件](#前置条件)
-- [第一步：声明依赖](#第一步声明依赖)
-- [第二步：引入 API](#第二步引入-api)
-- [第三步：获取 API 入口](#第三步获取-api-入口)
-- [第四步：注册你的第一个 UI](#第四步注册你的第一个-ui)
-- [第五步：验证与排查](#第五步验证与排查)
-- [进阶：使用组件库](#进阶使用组件库)
-- [进阶：注册资源与脚本](#进阶注册资源与脚本)
-- [进阶：Host 方法（C++ ↔ JS 双向调用）](#进阶host-方法c--js-双向调用)
-- [生命周期与注销](#生命周期与注销)
-- [常见问题 FAQ](#常见问题-faq)
-- [下一步](#下一步)
-
----
-
-## 它和你的 Mod 是什么关系
-
-你的 Mod 是**使用者**，DearOreUI 是**服务方**：
+你的客户端 Mod 负责业务和注册，DearOreUI 负责把 UI 挂到 OreUI 页面里。
 
 ```text
-你的 Mod（LeviLamina 原生模组）
-   │  调用 DearOreUI 的 API：注册 UI / 资源 / Host 方法
-   ▼
-DearOreUI（运行时）
-   │  负责：注入脚本 → 渲染 DOM → 显示到 OreUI 页面
-   ▼
-游戏画面
+你的 Mod
+  ├─ 获取 IDearOreUIApi*
+  ├─ registerMod()
+  ├─ registerComponent() / registerHostMethod()
+  ├─ publishEvent()
+  └─ subscribePage() / subscribeFrame()
+          │
+          ▼
+DearOreUI 运行时
+  ├─ 监听页面生命周期
+  ├─ 将组件和 DOM 注入页面
+  ├─ 把事件送到页面脚本
+  └─ 在页面销毁时通知 Mod
 ```
 
-关键点：
+示例模组并不链接一个 DearOreUI import library。`MyMod.cpp` 通过 Windows 模块导出查找 `DearOreUI.dll` 中的 `DearOreUI_QueryApi`，拿到 `IDearOreUIApi*`。这样做是这个示例仓库的实际集成方式，不要把它改写成文档里不存在的 `runtime::IRuntime::api()`。
 
-- **你不需要懂引擎内部**。cohtml、Hook、vtable、ExecuteScript 这些是 DearOreUI 内部的事，你的代码永远不碰它们。
-- **你的 Mod 不直接操作游戏 UI**。你只做"声明"（注册），DearOreUI 做"执行"（渲染）。
-- **多 Mod 共存**。多个 Mod 可以同时使用 DearOreUI，运行时负责冲突检测和依赖排序，不会互相覆盖。
+---
 
 ## 前置条件
 
-在开始之前，确认你的环境满足以下条件：
+示例仓库当前的构建目标是 Windows x64 客户端：
 
-| 条件 | 要求 | 说明 |
-| --- | --- | --- |
-| 加载器 | LeviLamina 26.10.x（客户端） | DearOreUI 以 LeviLamina 原生模组形式加载 |
-| 平台 | Windows x64 | 当前唯一目标平台 |
-| 语言 | C++20 | 原生 Mod，使用 Clang-CL 编译 |
-| 构建工具 | xmake | 与 DearOreUI 相同的构建链 |
-| 页面范围 | OreUI 技术栈页面 | 如世界列表页 `/play/all`；主菜单 / 世界内是 JsonUI，暂不支持 |
+| 项目 | 示例仓库中的实际配置 |
+| --- | --- |
+| 加载器 | LeviLamina 客户端 |
+| 语言 | C++20 |
+| 构建 | xmake |
+| DearOreUI 头文件 | `xmake.lua` 的 `dearoreui_include`，默认指向 `../DearOreUI/src` |
+| DearOreUI 运行时 | 游戏启动时必须已经加载 `DearOreUI.dll` |
+| UI 页面 | OreUI 页面，例如世界列表；不是 JsonUI 页面 |
+| 默认示例 | `07` |
 
-> [!NOTE]
-> 兼容性是多维度条件，不能只看 Minecraft 版本。每条验证记录必须包含：Minecraft 版本、LeviLamina 版本、DearOreUI 版本、Windows 版本与架构、OreUI 资源指纹、Hook 状态、诊断 ID 和验证证据。
+`xmake.lua` 当前使用：
 
-## 第一步：声明依赖
+```lua
+add_requires("levilamina 26.10.*", {
+    configs = { target_type = get_config("target_type") }
+})
 
-在 `tooth.json` 中声明 DearOreUI 为依赖：
+option("dearoreui_include")
+    set_default("../DearOreUI/src")
+option_end()
+```
+
+如果你的 DearOreUI 头文件不在默认相对路径，可以这样配置：
+
+```powershell
+xmake f --dearoreui_include=F:/path/to/DearOreUI/src
+xmake build -y
+```
+
+> `tooth.json` 负责这个示例模组的 LeviLamina 打包配置。DearOreUI 是运行时前置条件，示例代码通过 DLL bridge 查找它；不要只安装示例模组而漏掉 DearOreUI 本体。
+
+---
+
+## 运行示例模组
+
+克隆仓库后，先构建：
+
+```powershell
+git clone https://github.com/magicobs0z/dearoreui-ExampleMod.git
+cd dearoreui-ExampleMod
+xmake build -y
+```
+
+构建产物位于 `bin/my-mod/`。部署时复制整个目录，而不是只复制 DLL，因为示例还读取：
+
+```text
+bin/my-mod/config.json
+bin/my-mod/manifest.json
+bin/my-mod/my-mod.dll
+```
+
+默认配置：
 
 ```json
 {
-    "format_version": 3,
-    "tooth": "github.com/your-name/your-mod",
-    "version": "1.0.0",
-    "info": {
-        "name": "Your Mod",
-        "description": "A mod that uses DearOreUI",
-        "tags": ["platform:levilamina", "type:mod"]
-    },
-    "variants": [
-        {
-            "label": "client",
-            "platform": "win-x64",
-            "dependencies": {
-                "github.com/copper-lamp/Dear-OreUI": "0.1.*"
-            }
-        }
-    ]
+    "example": "07"
 }
 ```
 
-### 版本约束说明
+课程切换：
 
-| 写法 | 含义 |
-| --- | --- |
-| `"0.1.*"` | 匹配 0.1.x 任意补丁版本（推荐，兼容补丁更新） |
-| `"0.1.0"` | 精确锁定 0.1.0 |
-| `">=0.1.0"` | 大于等于 0.1.0 |
-
-> [!TIP]
-> 推荐使用 `0.1.*`。DearOreUI 遵循语义化版本：补丁版本（第三位）只修 bug，不破坏 API；主/次版本升级可能引入破坏性变更。
-
-## 第二步：引入 API
-
-在你的 Mod 源码中引入 DearOreUI 的公开头文件：
-
-```cpp
-#include "ll/api/mod/RegisterHelper.h"   // LeviLamina 的 Mod 注册宏
-#include "api/IDearOreUIApi.h"           // 统一 API 入口
-#include "api/manifest/ModManifest.h"    // Mod 身份声明
-#include "api/manifest/UiManifest.h"     // UI 声明
-#include "api/manifest/ResourceManifest.h" // 资源声明（可选）
-#include "api/manifest/ScriptManifest.h"   // 脚本声明（可选）
-#include "api/manifest/StyleSheetManifest.h" // 样式声明（可选）
-
-using namespace dearoreui::api;
+```json
+{ "example": "01" }
+{ "example": "02" }
+{ "example": "03" }
+{ "example": "04" }
+{ "example": "05" }
+{ "example": "06" }
+{ "example": "07" }
 ```
 
-### 头文件速查
+Mod 启动时，`ExampleFactory` 读取 `config.json`，只创建一个课程实例。空值、未知值和 `07` 都回退到完整日历。`06` 不在默认路径上，必须显式选择。
 
-| 头文件 | 内容 | 何时需要 |
+---
+
+## 课程路线：从连接到完整日历
+
+| 课程 | 文件 | 学什么 |
 | --- | --- | --- |
-| `IDearOreUIApi.h` | 统一入口，聚合全部能力 | 总是需要 |
-| `ModManifest.h` | Mod 身份（id / 命名空间 / 版本 / 依赖） | 总是需要 |
-| `UiManifest.h` | UI 声明（类型 / 位置 / 范围 / 指纹） | 注册 UI 时需要 |
-| `ResourceManifest.h` | 资源文件声明 | 注册资源时需要 |
-| `ScriptManifest.h` | JS 脚本声明 | 注册脚本时需要 |
-| `StyleSheetManifest.h` | CSS 样式声明 | 注册样式时需要 |
+| 01 | `ex01_hello_connection.h` | 获取 API、注册 Mod、读取运行时信息 |
+| 02 | `ex02_static_component.h` | 注册静态 `Panel/Card/Text` 组件 |
+| 03 | `ex03_page_script.h` | C++ 注入页面脚本，绘制月历骨架 |
+| 04 | `ex04_events.h` | C++ 发布 `calendar.today`，JS 接收事件 |
+| 05 | `ex05_frame_data.h` | 使用帧服务推送时钟，处理跨日 |
+| 06 | `ex06_host_method.h` | 注册一个 JS→C++ Host method，演示单 dispatch |
+| 07 | `ex07_calendar.cpp` | 组合月历、事件、输入、删除和时钟 |
 
-## 第三步：获取 API 入口
+建议按顺序看。直接跳到 07 也可以，但你会错过这个仓库为什么没有把所有东西都塞进一个组件树的原因。
 
-`IDearOreUIApi` 是统一入口，聚合了五组能力：
+---
 
-| 能力组 | 接口 | 职责 |
-| --- | --- | --- |
-| 运行时查询 | `IRuntimeApi` | `getInfo` / `getCapabilities` / `checkSupport` / `isReady` |
-| Mod 生命周期 | `IModApi` | `registerMod` / `unregisterMod` / `setModEnabled` |
-| 资源注册 | `IResourceApi` | `registerResource` / `registerScript` / `registerStyleSheet` |
-| UI 挂载 | `IUiApi` | `registerOverlay` / `registerPanel` / `registerButton` / `registerPage` / `registerComponent` |
-| Host 桥接 | `IHostApi` | `registerHostMethod`（带权限白名单） |
+## 第一步：注册 Mod 身份
 
-### 当前获取方式
+所有后续注册都要有一个已注册的 `ModId`。01 课程的核心代码很短：
 
 ```cpp
-// 参考内置 Demo 的获取方式（阶段 8 提供稳定的外部入口）
-auto* oreui = runtime::IRuntime::api();
-```
+dearoreui::api::ModManifest manifest;
+manifest.id           = dearoreui::api::ModId{"example.hello"};
+manifest.modNamespace = "example.hello";
+manifest.displayName  = "Hello Connection Example";
+manifest.modVersion   = dearoreui::api::Version{1, 0, 0};
+manifest.permissions  = {};
 
-> [!NOTE]
-> 上面的写法取自内置 Demo Overlay 的注册方式：`runtime::IRuntime::api()` 返回合并了运行时 / 资源 / Mod / UI / Host 五组能力的 `IDearOreUIApi*`。示例代码中的 `oreui` 变量就是这个入口。
-
-## 第四步：注册你的第一个 UI
-
-### 完整示例
-
-```cpp
-bool onLoad() {
-    // 1. 注册你的 Mod 身份（前置条件：资源/UI 注册都要求 Mod 已注册）
-    ModManifest manifest;
-    manifest.id           = ModId{"my-first-ui"};
-    manifest.modNamespace = "my_first_ui";
-    manifest.modVersion   = Version{1, 0, 0};
-
-    auto modResult = oreui->registerMod(manifest);
-    if (modResult.isErr()) {
-        // 注册失败：命名空间冲突、版本校验失败等
-        return false;
-    }
-
-    // 2. 声明一个居中显示的悬浮层
-    UiManifest ui;
-    ui.modNamespace = "my_first_ui";
-    ui.id           = "hello";
-    ui.kind         = UiKind::Overlay;   // 悬浮层（不占页面布局）
-    ui.anchor       = UiAnchor::Center;  // 居中
-    ui.pageScopes   = {PageScope::Any};  // 所有 OreUI 页面都显示
-    ui.fingerprint  = "hello-overlay-v1"; // 冲突检测指纹
-
-    // 3. 注册它，内容是一段 HTML
-    auto uiResult = oreui->registerOverlay(
-        ModId{"my-first-ui"},
-        ui,
-        "<div>Hello, DearOreUI!</div>"
-    );
-
-    return uiResult.isOk();
+auto result = mApi.registerMod(manifest);
+if (result.isErr()) {
+    logger.error("registerMod failed: {}", result.error().message);
+    return false;
 }
-
-LL_REGISTER_MOD(MyMod, onLoad);
 ```
 
-### 这段代码在做什么
-
-| 步骤 | 大白话 | 为什么必须 |
-| --- | --- | --- |
-| `registerMod` | 告诉 DearOreUI"我是谁" | 不注册身份，后面所有操作都会被拒绝 |
-| `UiManifest` | 描述"我想显示什么" | 类型、位置、范围都要先声明 |
-| `registerOverlay` | 把 UI 交给 DearOreUI | 它拿到后负责渲染到游戏里 |
-
-### ModManifest 字段详解
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `id` | `ModId` | Mod 唯一标识，全局唯一 |
-| `modNamespace` | `string` | 命名空间，用于资源路径隔离（如 `my_first_ui`） |
-| `modVersion` | `Version` | Mod 版本号 |
-| `dependencies` | `vector<Dependency>` | 依赖声明（可选） |
-
-### UiManifest 字段详解
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `modNamespace` | `string` | 必须与 Mod 的命名空间一致 |
-| `id` | `string` | UI 唯一标识 |
-| `kind` | `UiKind` | 类型：`Overlay` / `Panel` / `Button` / `Page` |
-| `pageScopes` | `vector<PageScope>` | 显示范围：`Any` 或指定页面 |
-| `anchor` | `UiAnchor` | 位置：`Center` / `TopLeft` / `TopRight` 等 |
-| `fingerprint` | `string` | 冲突检测指纹，变更 UI 时更新 |
-
-### UI 类型速查
-
-| 类型 | 用途 | 示例 |
-| --- | --- | --- |
-| `Overlay` | 悬浮层，不占页面布局 | 提示框、弹窗、HUD 元素 |
-| `Panel` | 面板，承载内容 | 设置面板、信息面板 |
-| `Button` | 按钮 | 快捷操作按钮 |
-| `Page` | 整页替换 | 自定义页面 |
-
-## 第五步：验证与排查
-
-启动游戏，进入世界列表页（`/play/all`）。如果看到居中的 "Hello, DearOreUI!"，链路就通了。
-
-### 排查表
-
-| 现象 | 可能原因 | 处理 |
-| --- | --- | --- |
-| 日志里没有 `ready` 事件 | 没捕获到 OreUI 页面，或 LeviLamina 版本不符 | 确认版本，检查日志 |
-| 有 `ready` 但没显示 | 当前页面不是 OreUI 技术栈 | 进入 `/play/all` 等 OreUI 页面 |
-| 样式不对 | cohtml 丢弃 HTML 内联 `style` 属性 | 改用 CSS 类或运行时设置样式 |
-| 注册报错 | 命名空间冲突或校验失败 | 看 `modResult.error()` / `uiResult.error()` |
-| 多个 Mod 冲突 | 指纹或命名空间重复 | 更新 `fingerprint`，检查命名空间 |
-
-### 诊断文件
-
-所有注册、计划、注入事件都会写入 `diagnostics.jsonl` 诊断文件：
-
-```text
-{"id":"...","timestamp":"...","severity":"info","category":"ui",
- "modId":"my-first-ui","pageId":"/play/all","errorCode":"", ...}
-```
-
-排查问题时**先看诊断文件**。日志中的 `DearOreUI data dir:` 一行会告诉你文件位置。
-
-## 进阶：使用组件库
-
-不想手写 HTML？可以用组件规格（`ComponentSpec`）描述界面，DearOreUI 会渲染成原版风格：
+`ExampleBase` 保存了两个对象：
 
 ```cpp
-#include "component/ComponentSpec.h"
-
-using namespace dearoreui::component;
-
-// 一个面板，里面放一行标题和一个按钮
-ComponentSpec panel;
-panel.kind  = ComponentKind::Panel;
-panel.label = "DearOreUI";
-
-ComponentSpec text;
-text.kind    = ComponentKind::Text;
-text.variant = "heading";
-text.label   = "DEMO";
-
-ComponentSpec button;
-button.kind    = ComponentKind::Button;
-button.variant = "primary";
-button.label   = "OK";
-
-panel.children.push_back(text);
-panel.children.push_back(button);
-
-oreui->registerComponent(ModId{"my-first-ui"}, uiManifest, panel);
+dearoreui::api::IDearOreUIApi& mApi;
+MyMod&                         mMod;
 ```
 
-### ComponentSpec 字段详解
-
-| 字段 | 类型 | 说明 |
-| --- | --- | --- |
-| `kind` | `ComponentKind` | 组件类型（37 种枚举：14 原子 + 23 组合） |
-| `label` | `string` | 主文本（按钮文字 / 面板标题 / 输入框提示） |
-| `variant` | `string` | 视觉变体（button: primary/secondary/neutral/destructive） |
-| `style` | `string` | 风格（button: normal/elevated；panel: default/dark/furnace/...） |
-| `disabled` | `bool` | 是否禁用 |
-| `state` | `string` | 交互状态（default/hovered/focused/pressed/disabled） |
-| `events` | `vector<string>` | 声明的事件（"click" / "change"） |
-| `children` | `vector<ComponentSpec>` | 子组件树 |
-| `body` | `vector<DomNode>` | 原始 DOM 内容（panel/card 正文） |
-
-### 组件分类
-
-`ComponentKind` 目前有 37 种枚举。前 14 种是原版风格原子组件，对应文档站 components 分区的一页页文档；后 23 种是阶段 8.1.4 新增的布局 / 组合 / 导航 / 交互 / 数据组件，各自的文档页已在 components 分区按分类收录。
-
-原子组件分类：
-
-| 类别 | 组件 |
-| --- | --- |
-| 基础交互 | 按钮 Button、输入框 Input |
-| 布局容器 | 面板 Panel、卡片 Card、分隔线 Divider、容器槽 ContainerSlot |
-| 数据展示 | 文本 Text、列表项 ListItem、按键图标 KeyIcon、气泡 Bubble |
-| 导航 | 标签栏 TabBar、筛选栏 FilterBar |
-| 反馈 | 提示框 Tooltip、进度条 Progress |
-
-8.1.4 组件分类：
-
-| 类别 | 组件 |
-| --- | --- |
-| 布局 L | 堆叠 Stack、网格 Grid、滚动视图 ScrollView、分组 Section、弹性间距 Spacer |
-| 组合 B | 弹窗 Modal、菜单 Menu、滚动列表 ScrollingList、下拉 Dropdown、表单 Form、顶栏 NavigationBar、通知 Toast、搜索框 SearchField、开关 Toggle |
-| 导航 N | 面包屑 Breadcrumb、分页 Pager |
-| 交互 I | 多行输入 TextArea、滑条 Slider、加减器 Stepper、选择器 Picker |
-| 数据 D | 图标 Icon、图片 Image、徽标 Badge |
-
-每个组件的详细用法见[组件总览](../components/overview)。
-
-## 进阶：注册资源与脚本
-
-除了 UI，你还可以注册资源、脚本和样式，让它们随页面一起注入：
+每个课程自己拥有一个命名空间，例如：
 
 ```cpp
-// 注册一个资源文件（如图片）
-ResourceManifest res;
-res.modNamespace = "my_first_ui";
-res.path         = "assets/logo.png";
-res.type         = ResourceType::Image;
-
-oreui->registerResource(ModId{"my-first-ui"}, res, imageData);
-
-// 注册一个 JS 脚本
-ScriptManifest script;
-script.modNamespace = "my_first_ui";
-script.path         = "scripts/main.js";
-
-oreui->registerScript(ModId{"my-first-ui"}, script, "console.log('hello');");
-
-// 注册一个 CSS 样式
-StyleSheetManifest css;
-css.modNamespace = "my_first_ui";
-css.path         = "styles/main.css";
-
-oreui->registerStyleSheet(ModId{"my-first-ui"}, css, ".my-class { color: red; }");
+mModId("example.calendar")
 ```
 
-## 进阶：Host 方法（C++ ↔ JS 双向调用）
-
-想让页面里的 JS 调用你的 C++ 代码？注册一个 Host 方法：
+课程结束时注销同一个 `ModId`：
 
 ```cpp
-#include "ipc/IHostMethod.h"
+static_cast<void>(mApi.unregisterMod(mModId));
+```
 
-class MyMethod : public ipc::IHostMethod {
-public:
-    std::string name() const override { return "myMod.greet"; }
+不要在一个课程里偷偷复用另一个课程的注册句柄。示例工厂一次只启用一个课程，这样切换配置不会留下上一课的 UI 和订阅。
 
-    // 处理 JS 调用，返回 JSON 字符串
-    std::string invoke(std::string const& args) override {
-        return R"({"message":"Hello from C++!"})";
-    }
-};
+---
 
-// 注册 Host 方法，带权限白名单
-oreui->registerHostMethod(
-    ModId{"my-first-ui"},
-    PermissionSet{"host.read_only"},   // 需要的权限
-    std::make_shared<MyMethod>()
+## 第二步：声明 UI Manifest
+
+07 日历使用的是 Overlay：
+
+```cpp
+dearoreui::api::UiManifest uiManifest;
+uiManifest.modNamespace  = mModId.value();
+uiManifest.id            = "calendar";
+uiManifest.kind          = dearoreui::api::UiKind::Overlay;
+uiManifest.pageScopes    = {dearoreui::api::PageScope::Any};
+uiManifest.anchor        = dearoreui::api::UiAnchor::TopRight;
+uiManifest.pointerEvents = true;
+uiManifest.containerId = dearoreui::api::makeUiContainerId(
+    uiManifest.modNamespace,
+    uiManifest.kind,
+    uiManifest.id
+);
+uiManifest.fingerprint = "calendar.v1";
+```
+
+这里有一个容易误会的地方：`anchor = TopRight` 是 DearOreUI 的挂载锚点，不等于你的页面内容必须永远挤在右上角。07 在挂载后把自己的根节点设为固定视口层，再在视口内部计算内容区域。
+
+```js
+root.style.cssText =
+  'position:fixed;left:0;top:0;width:100vw;height:100vh;...';
+```
+
+如果你的 UI 只是一个小提示框，使用更小的普通布局即可。只有页面型 UI 才需要接管整个 viewport。
+
+---
+
+## 第三步：注册组件或页面内容
+
+DearOreUI 的组件注册入口是：
+
+```cpp
+auto result = mApi.registerComponent(
+    mModId,
+    uiManifest,
+    componentSpec
 );
 ```
 
-页面 JS 里就可以调用：
+`ComponentSpec` 支持：
 
-```js
-// 页面脚本中调用 C++ 方法
-const result = await DearOreUI.call("myMod.greet", {});
-console.log(result.message); // "Hello from C++!"
-```
+- `kind`：组件类型
+- `label`：主文本
+- `variant`：按钮变体等
+- `style`：组件风格
+- `children`：嵌套组件树
+- `body`：原始 `DomNode` 内容
 
-> [!NOTE]
-> Host 方法注册时强制校验权限白名单。9 项权限包括 `resource.read` / `resource.register` / `page.observe` / `ui.mount` / `host.read_only` / `host.write` / `transform.resource` / `transform.bundle` / `diagnostic.read`。
-
-## 生命周期与注销
-
-每个注册操作都返回一个 `RegistrationHandle`，你可以用它注销：
+最小的组件示例：
 
 ```cpp
-// 保存句柄
-auto handle = oreui->registerOverlay(ModId{"my-first-ui"}, ui, html);
+dearoreui::api::ComponentSpec page;
+page.kind = dearoreui::api::ComponentKind::Section;
 
-// 需要时注销
-oreui->unregisterUi(handle);
-oreui->unregisterMod(ModId{"my-first-ui"});
+dearoreui::api::ComponentSpec title;
+title.kind  = dearoreui::api::ComponentKind::Text;
+title.label = "CALENDAR";
+title.variant = "heading";
+page.children.push_back(std::move(title));
+
+dearoreui::api::ComponentSpec button;
+button.kind  = dearoreui::api::ComponentKind::Button;
+button.label = "OK";
+page.children.push_back(std::move(button));
 ```
 
-| 操作 | 方法 | 说明 |
-| --- | --- | --- |
-| 注销 UI | `unregisterUi(handle)` | 移除已注册的 UI |
-| 注销资源 | `unregister(handle)` | 移除已注册的资源/脚本/样式 |
-| 注销 Host 方法 | `unregisterHostMethod(handle)` | 移除已注册的 Host 方法 |
-| 注销 Mod | `unregisterMod(id)` | 移除整个 Mod 及其全部注册 |
+上面的类型名在真实代码中都位于 `dearoreui::api` 命名空间。示例仓库的 `ex02_static_component.h` 使用的是 `Panel`、`Card`、`Text` 等组件，并且静态 label 使用 ASCII。这不是偶然的格式偏好：本次真机验证发现，主题字体对静态 CJK label 的支持并不稳定。
 
-> [!TIP]
-> Mod 禁用、页面销毁或 Runtime 关闭时，DearOreUI 会自动清理相关注册、监听、请求和页面资源，卸载无悬挂。你不需要手动清理，但显式注销可以立即释放。
+### 组件树什么时候适合用
 
-## 常见问题 FAQ
+静态结构适合用组件：
 
-**Q: 我的 Mod 需要懂 OreUI 内部吗？**
-A: 不需要。你只做声明式注册，cohtml / Hook / vtable 的复杂性由运行时承担。
+```text
+Panel / Card / Text / Divider / Button
+```
 
-**Q: 多个 Mod 都用 DearOreUI，会打架吗？**
-A: 不会。统一注册表 + 依赖排序 + 冲突检测 + 变换计划，冲突显式报错而非静默覆盖。
+它们可以直接获得 DearOreUI 的原版纹理和主题样式。
 
-**Q: 我在主菜单 / 世界内看不到 UI？**
-A: 那些是 JsonUI 技术栈，不在当前覆盖范围。DearOreUI 只覆盖 OreUI 技术栈页面（如 `/play/all`）。
+### 什么时候应该用原始 DOM
 
-**Q: 支持哪个 Minecraft 版本？**
-A: 目标 LeviLamina 26.10.x / Bedrock 26.10.x / Windows x64，能力矩阵与版本探测保证兼容性有据可依。
+07 先尝试过用 `Grid`、`Stack` 和 42 个动态 `Button` 组件构建整个月历。真机结果是日期按钮变成横向大条，组件状态样式还会反复覆盖脚本设置。最后的可用版本保留 `Section` 作为 DearOreUI 页面壳，动态月历、事件列表、输入框和时钟使用显式绝对定位 DOM。
 
-**Q: 这会修改我的游戏安装目录吗？**
-A: 不会。DearOreUI 完全运行时注入，不写游戏安装目录、不改原版资源。模组数据（诊断等）输出到 LeviLamina 数据目录。
+这是示例仓库当前的事实，不是 API 理想图：
 
-**Q: 我的 UI 没显示，怎么排查？**
-A: 先看 `diagnostics.jsonl` 诊断文件。日志中的 `DearOreUI data dir:` 一行会告诉你文件位置。
+```text
+DearOreUI Section
+└─ body: cal-root + script
+   ├─ 标题栏
+   ├─ 7 列 × 6 行日期
+   ├─ 事件列表
+   ├─ 输入框与添加操作
+   └─ 时钟
+```
 
-## 下一步
+工程上，能稳定使用组件的部分就使用组件；组件布局会破坏页面时，先保证页面能完整显示，再使用 `DomNode` 和页面脚本补上动态区域。
 
-- [快速入门](./getting-started) —— 10 分钟跑通第一个 Overlay
-- [组件总览](../components/overview) —— 37 种组件（14 原子 + 23 组合）
-- [设计原则](./design-principles) —— 为什么 DearOreUI 的 API 长这样
-- [给 AI 开发者的契约](./handbook/agent-ui) —— 渐进式 API 与能力矩阵详解
+---
+
+## 第四步：正确注入页面脚本
+
+示例在 `ComponentSpec.body` 的末尾追加脚本节点：
+
+```cpp
+std::vector<dearoreui::api::DomNode> body;
+body.push_back(dearoreui::api::DomNode{
+    .tag   = "div",
+    .attrs = {{"id", "cal-root"}},
+    .style = "position:fixed;left:0;top:0;width:100vw;height:100vh;",
+    .text  = "",
+});
+body.push_back(dearoreui::api::DomNode{
+    .tag  = "script",
+    .text = kPageScript,
+});
+
+page.body = std::move(body);
+```
+
+脚本必须在页面节点挂载后运行。示例的 `boot()` 会轮询 `cal-root` 和 `window.oreui`：
+
+```js
+var tries = 0;
+function boot() {
+    tries++;
+    var root = document.getElementById('cal-root');
+    if (!root || !window.oreui) {
+        if (tries < 60) setTimeout(boot, 50);
+        return;
+    }
+    build(root);
+    render();
+}
+boot();
+```
+
+在这个客户端上，不要把页面脚本交给不确定的 `eval()`、普通绑定通道或另一个未经验证的执行路径。示例使用的是 C++ 注册组件时追加的脚本节点，并在脚本内部等待挂载完成。
+
+---
+
+## 第五步：C++ 推送数据到 JS
+
+04、05、07 都使用 C++ 到 JS 的事件发布。07 在页面 Ready 后推送种子事件：
+
+```cpp
+dearoreui::api::EventPublishOptions seed;
+seed.owner   = mModId;
+seed.context = view.id;
+seed.name    = "calendar.events";
+seed.payload = seedEventsJson();
+
+auto result = mApi.publishEvent(seed);
+if (result.isErr()) {
+    logger.error("publish events failed: {}", result.error().message);
+}
+```
+
+JS 订阅同一个事件名：
+
+```js
+window.oreui.event.on('calendar.events', function (payload) {
+    if (payload && payload.events) {
+        state.events = payload.events;
+    }
+    render();
+});
+```
+
+事件 payload 要在 C++ 和 JS 两端保持同一个契约。07 的种子数据形状是：
+
+```json
+{
+  "events": {
+    "2026-08-22": ["今日计划", "示例事件"],
+    "2026-08-23": ["午休 12:00", "提交周报"],
+    "2026-08-24": ["周末活动"]
+  }
+}
+```
+
+示例没有把每次本地新增都发回 C++。本地事件保存在当前页面脚本的内存里，页面销毁后消失。需要持久化时，再设计 Host method 或资源/配置存储，不要默认把 JS 内存当成存档。
+
+---
+
+## 第六步：页面生命周期
+
+07 订阅两个页面事件：
+
+```cpp
+auto ready = mApi.subscribePage(
+    dearoreui::api::PageSubscriptionOptions{
+        mModId,
+        {dearoreui::api::PageScope::Any}
+    },
+    dearoreui::api::PageEvent::Ready,
+    [this](dearoreui::api::PageContextView const& view) {
+        onPageReady(view);
+    }
+);
+```
+
+Ready 回调里保存 `view.id`，用它作为事件发布上下文。Destroyed 回调里清除上下文并停止帧订阅：
+
+```cpp
+void CalendarExample::onPageDestroyed(
+    dearoreui::api::PageContextView const& /*view*/
+) {
+    mContextId.reset();
+    if (mFrameSub.has_value()) {
+        static_cast<void>(mApi.unsubscribeFrame(*mFrameSub));
+        mFrameSub.reset();
+    }
+    mLastClockSecond = -1;
+}
+```
+
+`shutdown()` 再按相反方向注销页面订阅、Host method、UI 和 Mod。这个顺序很重要：页面监听和帧回调不能在 UI 或 Mod 已经注销后继续运行。
+
+---
+
+## 第七步：使用帧服务推送时钟
+
+05 和 07 没有用 JS `setInterval` 作为游戏数据源，而是订阅 DearOreUI 的 frame service。07 每 30 帧检查一次，并按秒去重：
+
+```cpp
+auto handle = mApi.subscribeFrame(
+    dearoreui::api::FrameSubscriptionOptions{mModId},
+    [this]() { onFrame(); }
+);
+```
+
+`onFrame()` 生成 `calendar.clock` payload：
+
+```json
+{
+  "y": 2026,
+  "m": 8,
+  "d": 22,
+  "h": 20,
+  "mi": 19,
+  "s": 3
+}
+```
+
+JS 只更新时钟；跨日时更新今天标记。用户手动选择了其他日期时，时钟不能偷偷把详情页切走，这是示例最后修复的状态同步问题。
+
+---
+
+## Host method：先把权限和通道讲清楚
+
+06 是明确关闭的实验课程。它注册 `calendar.init`，服务端实现 `IHostMethod`：
+
+```cpp
+class CalendarInitMethod final : public dearoreui::api::IHostMethod {
+public:
+    std::string name() const override { return "calendar.init"; }
+
+    dearoreui::api::Permission requiredPermission() const override {
+        return dearoreui::api::Permission::HostReadOnly;
+    }
+
+    dearoreui::api::Result<std::string> execute(
+        dearoreui::api::ContextId /*contextId*/,
+        std::string_view /*args*/
+    ) override {
+        return dearoreui::api::Result<std::string>::success(
+            mOwner.handleInit()
+        );
+    }
+};
+```
+
+本次项目验证出的限制：一个页面的 dispatch 通道只有一次可靠使用额度。绑定通道在这个客户端出现过 `0x40080201` / `ViewDispatchAlreadyUsed` 相关问题，所以 07 默认只走 C++→JS 事件，不调用 Host method。需要研究 JS→C++ 时，显式选择 `06`。
+
+不要为了“看起来双向完整”在 07 里偷偷加第二次 dispatch。先把权限、页面范围和错误处理做好。
+
+---
+
+## 字体、颜色与布局：示例中真正验证过的结论
+
+### 中文字体
+
+07 使用这组字体栈：
+
+```css
+font-family: 'Microsoft YaHei', 'SimHei', 'Noto Sans SC',
+             'Noto Sans', 'Segoe UI', sans-serif;
+```
+
+Windows 客户端上中文已经可以正常显示，但这是字体栈匹配结果，不等于所有机器都一定使用同一个字体。若要做可移植字体资源，应另外验证 `ResourceKind::Font`、资源 URI 和页面字体加载链路；示例仓库没有假装这条链路已经完成。
+
+### 颜色
+
+07 最终只使用四组颜色：
+
+```text
+白色    #ffffff
+淡灰色  #d0d7de
+深灰色  #161b22 / #21262d / #30363d
+绿色    #3fb950
+```
+
+蓝色、红色和渐变在最终版本中已经移除。删除符号使用淡灰，今天、选中状态和事件标记使用绿色。
+
+### 布局
+
+CSS Grid 和 Flex 在本次目标页面上下文中表现不稳定，最早的日历版本出现过日期散落和按钮横向拉伸。最终日历使用显式坐标：
+
+```js
+var mx = Math.floor(viewportWidth * 0.10);
+var my = Math.floor(viewportHeight * 0.10);
+var contentWidth = viewportWidth - mx * 2;
+var contentHeight = viewportHeight - my * 2;
+var cellWidth = contentWidth / 7;
+var cellHeight = gridHeight / 6;
+```
+
+这样做看起来不如 Grid 简洁，但在这个运行环境里更容易控制。页面教程应该记录真机结果，而不是把理想中的 CSS 能力写成已验证事实。
+
+---
+
+## 验证和排查
+
+### 先看日志
+
+示例会输出类似：
+
+```text
+Connected to DearOreUI, protocol 1
+[example.calendar] full calendar registered
+Example '07-calendar' is active.
+```
+
+01 会额外打印：
+
+```text
+[example.hello] connected: protocol=v1 ready=true minecraft=... oreui=... coherent=...
+```
+
+### 再看配置
+
+如果始终看到 07，检查实际加载目录中的 `config.json`，不要只修改源码目录里的同名文件。`MyMod.cpp` 读取的是：
+
+```text
+getSelf().getModDir() / "config.json"
+```
+
+### 常见现象
+
+| 现象 | 先检查什么 |
+| --- | --- |
+| 没有连接日志 | DearOreUI.dll 是否已经加载，bridge 导出是否存在 |
+| 注册失败 | ModId、命名空间、页面范围和权限是否正确 |
+| 页面完全不显示 | 当前页面是否是 OreUI 页面，`boot()` 是否找到根节点 |
+| 日期变成横向大条 | 是否又把动态日期塞回 Grid/Stack，或父节点样式覆盖了绝对坐标 |
+| 中文变成方块 | 页面字体栈是否命中，组件静态 label 是否直接使用了中文 |
+| 点击日期无反应 | 是否使用真实 DOM `addEventListener` 委托，是否把点击落点冒泡到日期节点 |
+| 时间改变选中日期 | 不要让 `calendar.clock` 无条件覆盖 `state.selected` |
+| 页面退出后仍有回调 | Destroyed 和 `shutdown()` 是否取消了帧/页面订阅 |
+
+### 真机检查清单
+
+进入一个已知的 OreUI 页面后检查：
+
+- 标题、日期、事件文本是否居中；
+- 页面四边是否保留约 10% 空间；
+- 日期是否始终是 7 列 × 6 行；
+- 当前日期和手动选择日期是否没有互相覆盖；
+- 添加事件后刷新当前日期是否出现事件标记；
+- 删除事件后列表和标记是否一起消失；
+- 页面切换或退出时日志是否没有继续刷回调。
+
+---
+
+## 资源、脚本和 CSS：不要把未验证接口当成现成答案
+
+DearOreUI 的 API 确实提供资源、脚本和样式注册接口：
+
+```cpp
+mApi.registerResource(owner, resourceManifest, payload);
+mApi.registerScript(owner, scriptManifest, source);
+mApi.registerStyleSheet(owner, styleManifest, source);
+```
+
+具体字段以当前 `DearOreUI/src/api/manifest/` 头文件为准。字体资源尤其需要在目标客户端验证字体二进制、资源 URI 和 `@font-face` 是否完整打通。示例日历因此使用系统字体栈，而不是在仓库里声称已经注册了一套中文字体。
+
+同样，示例中的动态脚本使用 `DomNode` 注入，而不是文档里凭空捏造一个 `registerPageScript()` API。先复用已经在仓库和客户端走通的路径。
+
+---
+
+## 生命周期注销模板
+
+示例课程的 `shutdown()` 大致遵循这个顺序：
+
+```cpp
+unsubscribeFrame();
+unsubscribePage(Destroyed);
+unsubscribePage(Ready);
+unregisterHostMethod();
+unregisterUi();
+unregisterMod();
+```
+
+每一步都用保存的 `RegistrationHandle`，并在注销后 reset 对应的 optional。`unregisterMod()` 不能代替你在页面仍活跃时停止回调；显式取消订阅仍然要做。
+
+---
+
+## 继续阅读
+
+- [示例模组仓库](https://github.com/magicobs0z/dearoreui-ExampleMod)
+- [组件总览](../components/overview)
+- [Button](../components/button)
+- [Text](../components/text)
+- [Input](../components/input)
+- [Section](../components/section)
+- [Grid](../components/grid)
+- [快速入门](./getting-started)
+- [工具链](./toolchain)
+
+如果你要从自己的 Mod 开始，建议先复制示例的 01 课程，确认 bridge 和 `registerMod()` 正常，再一步步加 UI。不要直接从 07 的完整脚本开始抄；07 里有不少代码是为了适应这个特定客户端的页面布局限制。
