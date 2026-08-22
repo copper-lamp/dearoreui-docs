@@ -1,0 +1,52 @@
+# 滑条 Slider
+
+> 数值滑动条：progress 纹理轨道 + button 手柄，`value`/`min`/`max` 表达区间。用于音量、灵敏度等连续值。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec slider;
+slider.kind  = ComponentKind::Slider;
+slider.label = "音量";
+slider.value = "60";
+slider.min   = "0";
+slider.max   = "100";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, slider);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Slider` |
+| `label` | `string` | 滑条标题 |
+| `value` | `string` | 当前值 |
+| `min` / `max` | `string` | 取值范围 |
+| `style` | `string` | 轨道/手柄样式覆盖 |
+
+## 渲染结构
+
+```text
+<div data-component="slider">
+  <span>音量</span>
+  progress 纹理轨道（当前比例填充）
+  button 手柄 ← 位置由 value 推导
+</div>
+```
+
+> [!NOTE]
+> 拖动手柄的交互事件 → C++ 分发属后续里程碑；当前通过 `value` 声明位置。
+
+## 相关
+
+- [组件总览](./overview)
+- [进度条](./progress) —— 轨道纹理来源

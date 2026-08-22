@@ -1,0 +1,44 @@
+# 搜索框 SearchField
+
+> 搜索输入框：input + 放大镜图标。用于列表过滤、搜索场景。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec search;
+search.kind  = ComponentKind::SearchField;
+search.label = "搜索模组";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, search);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::SearchField` |
+| `label` | `string` | 占位提示文本（inputLegend hint） |
+| `style` | `string` | 宽度等样式 |
+
+## 拼装结构
+
+```text
+<div>
+  <input placeholder="搜索模组">
+  <img src="...Search-xxx.png">   ← search icon
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [输入框](./input)
+- [图标](./icon)

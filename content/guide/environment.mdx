@@ -140,8 +140,8 @@ using namespace dearoreui::api;
 auto* oreui = runtime::IRuntime::api();
 ```
 
-> [!WARNING]
-> 当前阶段 API 入口还在完善中。上面的写法是参考内置 Demo Overlay 的注册方式——它通过 `runtime::IRuntime::api()` 拿到 `IDearOreUIApi*`。等阶段 8 发布稳定入口后，这里会替换成一行简单的调用。示例代码中的 `oreui` 变量代表这个入口。
+> [!NOTE]
+> 上面的写法取自内置 Demo Overlay 的注册方式：`runtime::IRuntime::api()` 返回合并了运行时 / 资源 / Mod / UI / Host 五组能力的 `IDearOreUIApi*`。示例代码中的 `oreui` 变量就是这个入口。
 
 ## 第四步：注册你的第一个 UI
 
@@ -243,7 +243,7 @@ LL_REGISTER_MOD(MyMod, onLoad);
  "modId":"my-first-ui","pageId":"/play/all","errorCode":"", ...}
 ```
 
-排查问题时**先看诊断文件**，不靠猜。日志中的 `DearOreUI data dir:` 一行会告诉你文件位置。
+排查问题时**先看诊断文件**。日志中的 `DearOreUI data dir:` 一行会告诉你文件位置。
 
 ## 进阶：使用组件库
 
@@ -279,7 +279,7 @@ oreui->registerComponent(ModId{"my-first-ui"}, uiManifest, panel);
 
 | 字段 | 类型 | 说明 |
 | --- | --- | --- |
-| `kind` | `ComponentKind` | 组件类型（14 种枚举） |
+| `kind` | `ComponentKind` | 组件类型（37 种枚举：14 原子 + 23 组合） |
 | `label` | `string` | 主文本（按钮文字 / 面板标题 / 输入框提示） |
 | `variant` | `string` | 视觉变体（button: primary/secondary/neutral/destructive） |
 | `style` | `string` | 风格（button: normal/elevated；panel: default/dark/furnace/...） |
@@ -289,7 +289,11 @@ oreui->registerComponent(ModId{"my-first-ui"}, uiManifest, panel);
 | `children` | `vector<ComponentSpec>` | 子组件树 |
 | `body` | `vector<DomNode>` | 原始 DOM 内容（panel/card 正文） |
 
-### 14 种组件
+### 组件分类
+
+`ComponentKind` 目前有 37 种枚举。前 14 种是原版风格原子组件，对应文档站 components 分区的一页页文档；后 23 种是阶段 8.1.4 新增的布局 / 组合 / 导航 / 交互 / 数据组件，各自的文档页已在 components 分区按分类收录。
+
+原子组件分类：
 
 | 类别 | 组件 |
 | --- | --- |
@@ -298,6 +302,16 @@ oreui->registerComponent(ModId{"my-first-ui"}, uiManifest, panel);
 | 数据展示 | 文本 Text、列表项 ListItem、按键图标 KeyIcon、气泡 Bubble |
 | 导航 | 标签栏 TabBar、筛选栏 FilterBar |
 | 反馈 | 提示框 Tooltip、进度条 Progress |
+
+8.1.4 组件分类：
+
+| 类别 | 组件 |
+| --- | --- |
+| 布局 L | 堆叠 Stack、网格 Grid、滚动视图 ScrollView、分组 Section、弹性间距 Spacer |
+| 组合 B | 弹窗 Modal、菜单 Menu、滚动列表 ScrollingList、下拉 Dropdown、表单 Form、顶栏 NavigationBar、通知 Toast、搜索框 SearchField、开关 Toggle |
+| 导航 N | 面包屑 Breadcrumb、分页 Pager |
+| 交互 I | 多行输入 TextArea、滑条 Slider、加减器 Stepper、选择器 Picker |
+| 数据 D | 图标 Icon、图片 Image、徽标 Badge |
 
 每个组件的详细用法见[组件总览](../components/overview)。
 
@@ -411,6 +425,6 @@ A: 先看 `diagnostics.jsonl` 诊断文件。日志中的 `DearOreUI data dir:` 
 ## 下一步
 
 - [快速入门](./getting-started) —— 10 分钟跑通第一个 Overlay
-- [组件总览](../components/overview) —— 14 种原版风格组件
+- [组件总览](../components/overview) —— 37 种组件（14 原子 + 23 组合）
 - [设计原则](./design-principles) —— 为什么 DearOreUI 的 API 长这样
-- [给 AI 开发者的契约](../handbook/agent-ui) —— 渐进式 API 与能力矩阵详解
+- [给 AI 开发者的契约](./handbook/agent-ui) —— 渐进式 API 与能力矩阵详解

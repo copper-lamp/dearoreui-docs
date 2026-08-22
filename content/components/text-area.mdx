@@ -1,0 +1,44 @@
+# 多行文本输入 TextArea
+
+> 多行文本输入框：`textarea` 元素，input 的多行扩展。用于描述、备注、长文本。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec textArea;
+textArea.kind  = ComponentKind::TextArea;
+textArea.label = "请输入说明…";
+textArea.value = "默认内容";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, textArea);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::TextArea` |
+| `label` | `string` | 占位提示文本 |
+| `value` | `string` | 初始内容 |
+| `style` | `string` | 行数/高度等样式 |
+
+## 渲染结构
+
+```text
+<textarea data-component="text-area">
+  placeholder=<label>; 内容=<value>
+</textarea>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [输入框](./input) —— 单行版本

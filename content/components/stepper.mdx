@@ -1,0 +1,48 @@
+# 加减器 Stepper
+
+> 数值步进器：button（−）+ 当前值 + button（+）。用于数量、倍率等离散值。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec stepper;
+stepper.kind  = ComponentKind::Stepper;
+stepper.label = "数量";
+stepper.value = "3";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, stepper);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Stepper` |
+| `label` | `string` | 标题 |
+| `value` | `string` | 当前值 |
+
+## 渲染结构
+
+```text
+<div data-component="stepper">
+  <span>数量</span>
+  button(−)  Text(3)  button(+)
+</div>
+```
+
+> [!NOTE]
+> 增减点击交互 → C++ 分发属后续里程碑；当前 `value` 由外部更新。
+
+## 相关
+
+- [组件总览](./overview)
+- [按钮](./button)
+- [文本](./text)

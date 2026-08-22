@@ -4,6 +4,14 @@ export default {
     installation: "安装与构建",
     "design-principles": "设计原则",
     environment: "在你的模组中使用",
+    "--- 生态": {
+        type: "separator",
+        title: "生态",
+    },
+    roadmap: "路线图",
+    toolchain: "工具链",
+    showcase: "展示",
+    "design-resources": "设计资源",
     "--- 手册": {
         type: "separator",
         title: "手册",

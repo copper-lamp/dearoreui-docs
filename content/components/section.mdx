@@ -1,0 +1,50 @@
+# 分组 Section
+
+> 带可选标题的内容分组，垂直堆叠子组件。标题用 subheading 文本。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec section;
+section.kind  = ComponentKind::Section;
+section.label = "显示设置";
+
+ComponentSpec toggle;
+toggle.kind = ComponentKind::Toggle;
+toggle.label = "自动隐藏";
+section.children.push_back(toggle);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, section);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Section` |
+| `label` | `string` | 分组标题（Text subheading，可选） |
+| `children` | `vector<ComponentSpec>` | 组内内容 |
+| `style` | `string` | 间距等样式 |
+
+## 渲染结构
+
+```text
+<div data-component="section">
+  display:flex; flex-direction:column; gap:<space>
+  <span class="subheading">标题</span>   ← 有 label 时
+  ...children...
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [堆叠](./stack) —— 无标题的纯布局

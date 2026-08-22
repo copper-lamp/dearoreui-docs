@@ -1,0 +1,55 @@
+# 顶栏 NavigationBar
+
+> 页面顶部导航：品牌区（Text）+ 标签栏 + 快捷键提示（keyIcon）。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec nav;
+nav.kind  = ComponentKind::NavigationBar;
+nav.label = "我的世界";
+
+ComponentSpec tab1;
+tab1.kind  = ComponentKind::TabBar;
+tab1.label = "设置";
+nav.children.push_back(tab1);
+
+ComponentSpec pk;
+pk.kind    = ComponentKind::KeyIcon;
+pk.label   = "Escape";
+nav.children.push_back(pk);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, nav);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::NavigationBar` |
+| `label` | `string` | 品牌区文字 |
+| `children` | `vector<ComponentSpec>` | tabBar、keyIcon、按钮等 |
+
+## 拼装结构
+
+```text
+<div>
+  ├─ 品牌区（Text heading）
+  ├─ tabBar（标签导航）
+  └─ keyIcon × N（快捷键提示）
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [标签栏](./tab-bar)
+- [按键图标](./key-icon)

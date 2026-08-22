@@ -14,17 +14,17 @@ DearOreUI 是运行在客户端里的原生模组，使用前请确认你的环�
 | DearOreUI | 最新发布版（`DearOreUI.dll`） |
 
 > [!NOTE]
-> DearOreUI 当前处于早期开发阶段，仅覆盖 **OreUI 技术栈**页面（例如世界列表页 `/play/all`）。主菜单、世界内界面属于 JsonUI 技术栈，暂不支持。
+> DearOreUI 当前仅覆盖 **OreUI 技术栈**页面（例如世界列表页 `/play/all`）。主菜单、世界内界面属于 JsonUI 技术栈，暂不支持。
 
 ## 安装
 
-1. 从 [Releases](https://github.com/copper-lamp/Dear-OreUI/releases) 下载最新的 `DearOreUI.dll`。
+1. 从 [Releases](https://github.com/DearOreUI/DearOreUI/releases) 下载最新的 `DearOreUI.dll`。
 2. 将 DLL 放入客户端的 `mods/` 目录。
 3. 启动游戏并进入世界列表页（`/play/all`）。
 
-如果安装成功，你应该能看到一个居中的 **DearOreUI DEMO** 覆盖层——这是内置的演示 Overlay，用来证明「注册 → 计划 → 挂载 → 注入 → 显示」链路已经打通。
+安装成功的标志：世界列表页中央出现一个居中的 **DearOreUI DEMO** 覆盖层。这是内置的演示 Overlay，用来确认「注册 → 计划 → 挂载 → 注入 → 显示」链路已打通。
 
-同时，模组会在数据目录输出诊断文件（例如 `diagnostics.jsonl`），日志中的 `DearOreUI data dir:` 一行会告诉你它的位置。
+模组同时会在数据目录输出诊断文件（例如 `diagnostics.jsonl`），日志中的 `DearOreUI data dir:` 一行会告诉你它的位置。
 
 ## 编写第一个 Overlay
 
@@ -38,7 +38,7 @@ DearOreUI 的扩展模型是**声明式**的：你的 Mod 先注册自身，再�
 
 using namespace dearoreui::api;
 
-// 获取 DearOreUI 运行时公开 API 的入口（示例为伪代码，具体入口见下文）
+// 获取 DearOreUI 运行时公开 API 的入口（具体方式见下文）
 // IDearOreUIApi* oreui = ...;
 
 bool onLoad() {
@@ -77,12 +77,12 @@ LL_REGISTER_MOD(MyMod, onLoad);
 ### 这段代码做了什么
 
 1. **注册 Mod**：`registerMod` 会校验 Manifest（命名空间、版本、依赖），并把 Mod 记入多 Mod 注册表。Mod 未注册前，后续的资源 / UI 注册都会失败。
-2. **声明 UI**：`UiManifest` 描述了这个 UI 长什么样——类型（`Overlay`）、显示范围（`pageScopes`）、位置（`anchor`）和指纹（`fingerprint`，用于冲突检测）。
+2. **声明 UI**：`UiManifest` 描述了这个 UI 长什么样：类型（`Overlay`）、显示范围（`pageScopes`）、位置（`anchor`）和指纹（`fingerprint`，用于冲突检测）。
 3. **注册 Overlay**：`registerOverlay` 接收 UI 描述和一段 HTML 正文，返回一个 `RegistrationHandle`，之后可以用它注销 UI。
 
 ### 关于获取 API 入口
 
-上面示例中的 `oreui` 入口目前还在完善中（阶段 8 会提供稳定的获取方式）。在那之前，可以参考内置 Demo Overlay 的注册方式——它通过 `runtime::IRuntime::api()` 拿到 `IDearOreUIApi*`，再调用 `registerMod` → `registerComponent`，流程与本例完全一致。
+示例里的 `oreui` 入口当前取自内置 Demo 的注册方式：`runtime::IRuntime::api()` 返回 `IDearOreUIApi*`，再调用 `registerMod` → `registerOverlay`，流程与本例一致。完整的集成步骤见[在你的模组中使用](./environment)。
 
 ## 验证
 
@@ -102,6 +102,7 @@ LL_REGISTER_MOD(MyMod, onLoad);
 
 ## 下一步
 
-- 了解 [Manifest 与权限](../api/manifest.mdx)（资源、脚本、样式的声明方式）
-- 了解 [UI 挂载与生命周期](../ui/mount.mdx)（Overlay、Panel、Button 的区别）
-- 了解 [调试与遥测](../debug/diagnostics.mdx)（诊断事件字段、能力矩阵）
+- 了解 [声明依赖与 Manifest](./environment#第一步声明依赖)（资源、脚本、样式的声明方式）
+- 了解 [UI 类型与生命周期](./environment#ui-类型速查)（Overlay、Panel、Button 的区别）
+- 了解 [诊断与排查](./environment#诊断文件)（诊断事件字段、能力矩阵）
+- 了解 [设计原则](./design-principles) —— 为什么 API 长这样

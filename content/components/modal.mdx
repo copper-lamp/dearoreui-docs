@@ -1,0 +1,67 @@
+# 弹窗 Modal
+
+> 模态对话框：半透明遮罩 + modalForm 面板 + 标题 + 内容 + 按钮组。由 A 组组件拼装。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec modal;
+modal.kind  = ComponentKind::Modal;
+modal.label = "确认删除？";
+
+ComponentSpec content;
+content.kind  = ComponentKind::Text;
+content.label = "此操作不可撤销";
+modal.children.push_back(content);
+
+ComponentSpec cancel;
+cancel.kind    = ComponentKind::Button;
+cancel.variant = "neutral";
+cancel.label   = "取消";
+modal.children.push_back(cancel);
+
+ComponentSpec confirm;
+confirm.kind    = ComponentKind::Button;
+confirm.variant = "destructive";
+confirm.label   = "删除";
+modal.children.push_back(confirm);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, modal);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Modal` |
+| `label` | `string` | 弹窗标题 |
+| `children` | `vector<ComponentSpec>` | 内容与按钮组 |
+| `state` | `string` | `default`（显示）等状态切换 |
+
+## 拼装结构
+
+```text
+<div class="backdrop">                      ← 半透明遮罩
+  panel(modalForm)
+    ├─ 标题（Text heading）
+    ├─ ...children（内容 + 按钮组）...
+    └─ 关闭装饰
+</div>
+```
+
+> [!NOTE]
+> 本阶段 modal 提供渲染能力与 `state` 切换；开关交互的点击事件 → C++ 分发属后续里程碑。
+
+## 相关
+
+- [组件总览](./overview)
+- [面板](./panel) —— modalForm 容器变体
+- [按钮](./button) —— 按钮组

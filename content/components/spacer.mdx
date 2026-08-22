@@ -1,0 +1,61 @@
+# 弹性间距 Spacer
+
+> 占据剩余空间的弹性占位，`flex: 1`。用于把按钮、文本推到容器两端或中间。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec spacer;
+spacer.kind = ComponentKind::Spacer;
+```
+
+在 stack 中把一组按钮推到右侧：
+
+```cpp
+ComponentSpec stack;
+stack.kind        = ComponentKind::Stack;
+stack.orientation = "row";
+
+ComponentSpec text;
+text.kind  = ComponentKind::Text;
+text.label = "已选 3 项";
+stack.children.push_back(text);
+
+ComponentSpec push;
+push.kind = ComponentKind::Spacer;   // 吃掉中间剩余空间
+stack.children.push_back(push);
+
+ComponentSpec button;
+button.kind    = ComponentKind::Button;
+button.label   = "应用";
+stack.children.push_back(button);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, stack);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Spacer` |
+
+没有其他配置字段；只作为 flex 布局中的弹性占位。
+
+## 渲染结构
+
+```text
+<div data-component="spacer">   ← flex:1
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [堆叠](./stack) —— 与 spacer 搭配使用

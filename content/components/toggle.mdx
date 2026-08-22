@@ -1,0 +1,49 @@
+# 开关 Toggle
+
+> 开/关切换控件：按钮状态 + Checkmark 图标。用于设置项、权限开关（近似原版 facet 组件）。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec toggle;
+toggle.kind    = ComponentKind::Toggle;
+toggle.label   = "自动保存";
+toggle.state   = "default";   // 开：checked 状态
+toggle.disabled = false;
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, toggle);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Toggle` |
+| `label` | `string` | 开关项文字 |
+| `state` | `string` | `default`（开）/ 关闭状态切换 |
+| `disabled` | `bool` | 是否禁用 |
+
+## 拼装结构
+
+```text
+button（状态化）
+  ├─ Text（标签）
+  └─ checkmark icon（选中时）
+```
+
+> [!NOTE]
+> 原版用 facet 组件 + 纹理实现 toggle；DearOreUI 目前以 button 状态 + Checkmark 图标近似，交互事件分发属后续里程碑。
+
+## 相关
+
+- [组件总览](./overview)
+- [按钮](./button)
+- [图标](./icon)

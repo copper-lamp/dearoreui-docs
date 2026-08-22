@@ -1,0 +1,54 @@
+# 通知 Toast
+
+> 轻量通知：panel/bubble + 文本 + 时间线动画。用于操作反馈、服务端消息。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec toast;
+toast.kind  = ComponentKind::Toast;
+toast.label = "世界已保存";
+
+ComponentSpec action;
+action.kind    = ComponentKind::Button;
+action.variant = "secondary";
+action.label   = "查看";
+toast.children.push_back(action);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, toast);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Toast` |
+| `label` | `string` | 通知文本 |
+| `children` | `vector<ComponentSpec>` | 可选操作按钮等 |
+| `style` | `string` | 位置与动画样式 |
+
+## 拼装结构
+
+```text
+panel / bubble
+  ├─ Text（通知内容）
+  └─ button（可选操作）
+  + 时间线动画（进入/退出）
+```
+
+> [!NOTE]
+> 通知生命周期（自动消失/定时）需在外部结合事件实现，组件本身只负责渲染。
+
+## 相关
+
+- [组件总览](./overview)
+- [气泡](./bubble)
+- [面板](./panel)

@@ -1,0 +1,50 @@
+# 滚动列表 ScrollingList
+
+> 可滚动的列表：scrollView 内放一组 listItem。适合长列表（模组、服务器、设置项）。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec list;
+list.kind  = ComponentKind::ScrollingList;
+list.label = "服务器列表";
+
+for (int i = 0; i < 20; ++i) {
+    ComponentSpec item;
+    item.kind  = ComponentKind::ListItem;
+    item.label = "服务器 " + std::to_string(i);
+    item.variant = i == 0 ? "action" : "base";
+    list.children.push_back(item);
+}
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, list);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::ScrollingList` |
+| `label` | `string` | 可选标题 |
+| `children` | `vector<ComponentSpec>` | 列表项，每个渲染为 listItem |
+
+## 拼装结构
+
+```text
+scroll-view（overflow-y:auto; height:100%）
+  └─ listItem × N
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [滚动视图](./scroll-view)
+- [列表项](./list-item)

@@ -1,0 +1,46 @@
+# 设计资源
+
+> 原版 OreUI 设计系统的盘点，以及 DearOreUI 组件库如何复用这些资产。事实源：`Docs/DearOreUI-阶段8.1-原版组件库盘点与还原设计.md`。
+
+## 资产全貌（`gui/dist/hbui`）
+
+原版 OreUI 资源位于游戏数据目录 `data/gui/dist/hbui/`，overlay 与页面共享同一 cohtml 文档，运行时这些样式、纹理、字体都已加载：
+
+| 资产 | 规模 | 说明 |
+| --- | --- | --- |
+| `menus-theme-*.css` | 59 KB | 菜单主题设计令牌（CSS 自定义属性），组件纹理以 `border-image` 变量定义 |
+| `gameplay-theme-*.css` | 17 KB | 游戏内主题（容器/面板/物品槽/进度/提示框） |
+| `index-*.css` 等实例样式 | 238/78/147 KB | 组件实例样式（混淆类名，不可直接引用，但消费主题变量） |
+| `menus-atlas-*.png` | 64 KB + 坐标表 | 菜单 9-slice 纹理（pressable 25 张、card、listItem、tabBar 等） |
+| `gameplay-atlas-*.png` | 10 KB + 坐标表 | 物品槽、容器、进度条、tooltip 等 |
+| `assets/` | 896 文件 | 图标、动画等素材（pressable、Chevron、键盘图标等） |
+| `fonts/` | 18 文件 | Minecraft Ten/Five/Seven v2 与 Noto Sans（含 CJK） |
+| `routes.json` | 7.8 KB | 页面路由清单 |
+
+## 还原机制
+
+原版观感来自三个东西的组合：
+
+1. **CSS 自定义属性**：主题 CSS 定义 `--pressablePrimaryDefaultBorderImageSource` 等完整契约，组件实例 CSS 用 `var(--xxx)` 消费。
+2. **border-image 9-slice 纹理**：`border-image: url(...) <slice>; border-width: ...; border-image-outset: ...`。
+3. **状态切换**：default / hovered / focused / pressed / disabled 逐状态交换样式。
+
+cohtml 支持 CSS 变量与 border-image；`element.style.cssText` 是唯一可靠样式通道。组件渲染器输出这些属性，观感即与原版一致——详见[造型](./handbook/styling)。
+
+## 组件分组
+
+- **A 组（原子组件，★★★★★）**：button、panel、card、listItem、tabBar、input、tooltip、bubble、filterBar、containerSlot、progress、keyIcon——原版纹理/变量直接还原，全部已并入组件库。
+- **B 组（组合组件，★★★★☆）**：modal、menu、scrollingList、dropdown、form、navigationBar、toast、searchField、toggle——由 A 组拼装。
+- **C 组（依赖运行时数据）**：物品图标、头像等——需游戏数据桥，当前不在组件库内。
+
+完整清单与保真度评级见[组件总览](../components/overview) 与阶段 8.1 盘点文档。
+
+## 主题令牌
+
+DearOreUI 把原版主题提取成 `ThemeTokens`：颜色、字体、字号刻度、行高、间距、纹理覆盖表。所有组件消费同一套令牌。见[主题令牌](../components/theme) 与[手册：主题](./handbook/themes)。
+
+## 相关
+
+- [组件总览](../components/overview) —— 组件库入口
+- [主题令牌](../components/theme) —— 令牌对照表
+- [路线图](./roadmap) —— 设计资源相关的后续规划

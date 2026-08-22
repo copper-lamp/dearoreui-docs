@@ -1,0 +1,43 @@
+# 面包屑 Breadcrumb
+
+> 层级路径指示：横向 stack + 文本 + 分隔符（`/`）。显示当前位置与上级路径。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec breadcrumb;
+breadcrumb.kind  = ComponentKind::Breadcrumb;
+breadcrumb.label = "设置 > 显示 > 图形";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, breadcrumb);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Breadcrumb` |
+| `label` | `string` | 路径文本，用 `>` 或 `/` 分隔层级 |
+
+## 渲染结构
+
+```text
+<div data-component="breadcrumb">
+  display:flex; gap:<space>
+  <span>设置</span> <sep>/</sep> <span>显示</span> <sep>/</sep> <span>图形</span>
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [文本](./text)
+- [堆叠](./stack) —— 横向排列
