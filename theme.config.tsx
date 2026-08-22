@@ -1,13 +1,18 @@
 import type { ReactNode } from "react";
+import Image from "next/image";
+
+// GitHub Actions（GitHub Pages 子路径部署）为 public 资源拼前缀。
+// 静态导出（output:"export"）下 next/image 不会自动给 src 加 basePath，
+// 与 next.config.mjs 的判定保持一致。
+const basePath = process.env.GITHUB_ACTIONS === "true" ? "/dearoreui-docs" : "";
 
 /** 站点 Logo（Navbar 使用） */
 export const logo: ReactNode = (
-    <img
-        src="/images/icon_s.png"
+    <Image
+        src={`${basePath}/images/icon_s.png`}
         alt="DearOreUI"
+        width={56}
         height={28}
-        width={28}
-        style={{ objectFit: "contain" }}
     />
 );
 
