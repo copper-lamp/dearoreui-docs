@@ -29,20 +29,33 @@ xmake -v -y
 
 ## 外部 Mod 开发
 
-外部 Mod 通过 DearOreUI 公开 API 集成。两种接入方式：
+外部 Mod 通过 DearOreUI 公开 API 集成。DearOreUI 是一份"header-only 公开头 + 运行期 C ABI 桥"的前置运行时：编译期头通过**自托管的 xmake-repo**（`dearoreui-repo`）声明式引入，不链接任何 import library。接入分两步：
 
-1. **纯 C bridge 导出**（推荐）：`DearOreUI_QueryApi`，不链接 import library，运行时探测；示例见 [dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) 的 `loadBridge()`。
-2. **C++ 头文件**：`#include "api/IDearOreUIApi.h"` 等公开头，需要 `DearOreUI` 的头文件与依赖。
+1. **编译期 —— 引入头文件**：在 `xmake.lua` 里添加自托管仓库并声明依赖，`include` 无需任何手动 `add_includedirs`：
 
-在 `tooth.json` 声明依赖：
+   ```lua
+   add_repositories("dearoreui-repo", "https://github.com/copper-lamp/dearoreui-repo.git")
+   add_requires("dearoreui") -- 或指定版本 add_requires("dearoreui 0.1.1")
+
+   target("my-mod")
+       add_packages("dearoreui")
+   ```
+
+   这样即可 `#include "api/IDearOreUIApi.h"` 等公开头。该包是 header-only，**只提供声明，不产生任何链接**。
+
+2. **运行期 —— 解析 C ABI 桥**：用 `GetProcAddress("DearOreUI_QueryApi")` 拿到 `IDearOreUIApi*`，见 [dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) 的 `loadBridge()`。DearOreUI 对外只导出这一个 C 符号（`bridge/DearOreUIBridge.h` 中的 `DearOreUI_QueryApi`）；其余 C++ 类型由公开头跨结构体 ABI 访问。
+
+加载顺序由 LeviLamina 原生依赖图保证，外部 Mod 需在 **`manifest.json`** 声明：
 
 ```json
-"dependencies": {
-    "github.com/copper-lamp/Dear-OreUI": "0.1.*"
-}
+"dependencies": [
+    { "name": "DearOreUI" }
+]
 ```
 
-详见[在你的模组中使用](./environment) 的「第一步：声明依赖」。
+这一步负责"运行加载前 DearOreUI 已就绪、缺失则加载失败"。它与打包层的 `tooth.json` 依赖（用于自动安装前置）是**两回事**。自托管 `dearoreui-repo` 只解决编译期头文件的声明式引入，不参与运行期加载。
+
+详见[在你的模组中使用](./environment) 的「先看清楚：DearOreUI 负责什么」。
 
 ## App 设计器
 

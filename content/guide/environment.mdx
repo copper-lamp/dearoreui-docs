@@ -37,6 +37,8 @@ DearOreUI 运行时
   └─ 在页面销毁时通知 Mod
 ```
 
+> **编译期头文件走自托管 xmake-repo，运行期走 C ABI 桥，无需链接。**
+
 示例模组并不链接一个 DearOreUI import library。`MyMod.cpp` 通过 Windows 模块导出查找 `DearOreUI.dll` 中的 `DearOreUI_QueryApi`，拿到 `IDearOreUIApi*`。这样做是这个示例仓库的实际集成方式，不要把它改写成文档里不存在的 `runtime::IRuntime::api()`。
 
 ---
@@ -50,27 +52,30 @@ DearOreUI 运行时
 | 加载器 | LeviLamina 客户端 |
 | 语言 | C++20 |
 | 构建 | xmake |
-| DearOreUI 头文件 | `xmake.lua` 的 `dearoreui_include`，默认指向 `../DearOreUI/src` |
+| DearOreUI 头文件 | `add_repositories` + `add_requires("dearoreui")`（自托管 `dearoreui-repo`） |
 | DearOreUI 运行时 | 游戏启动时必须已经加载 `DearOreUI.dll` |
 | UI 页面 | OreUI 页面，例如世界列表；不是 JsonUI 页面 |
 | 默认示例 | `07` |
 
-`xmake.lua` 当前使用：
+`xmake.lua` 通过自托管 xmake-repo 声明式引入 DearOreUI 头文件：
 
 ```lua
+add_repositories("levimc-repo https://github.com/LiteLDev/xmake-repo.git")
+add_repositories("dearoreui-repo https://github.com/copper-lamp/dearoreui-repo.git")
+
 add_requires("levilamina 26.10.*", {
     configs = { target_type = get_config("target_type") }
 })
+add_requires("dearoreui 0.1.1")
 
-option("dearoreui_include")
-    set_default("../DearOreUI/src")
-option_end()
+target("my-mod")
+    add_packages("levilamina", "dearoreui")
 ```
 
-如果你的 DearOreUI 头文件不在默认相对路径，可以这样配置：
+需要升级 DearOreUI 公开头时，更新 `add_requires` 里的版本（或在 `dearoreui-repo` 发布新版后）并刷新依赖：
 
 ```powershell
-xmake f --dearoreui_include=F:/path/to/DearOreUI/src
+xmake f --require=y
 xmake build -y
 ```
 
