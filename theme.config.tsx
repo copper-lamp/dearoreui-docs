@@ -25,11 +25,3 @@ export const docsRepositoryBase =
 
 /** 页脚文案（Footer 使用） */
 export const footerText = "DearOreUI Documentation";
-
-/** 顶部导航：4 个大分区 */
-export const navLinks = [
-    { href: "/", label: "首页" },
-    { href: "/guide/introduction", label: "入门指南" },
-    { href: "/components/overview", label: "组成部分" },
-    { href: "/releases", label: "发行作品" },
-];
