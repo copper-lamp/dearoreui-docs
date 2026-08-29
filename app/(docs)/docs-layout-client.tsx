@@ -1,4 +1,5 @@
 "use client";
+"use no memo";
 
 import { Footer, Layout } from "nextra-theme-docs";
 import { usePathname } from "next/navigation";

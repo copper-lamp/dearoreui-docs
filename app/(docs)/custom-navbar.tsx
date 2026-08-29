@@ -1,4 +1,5 @@
 "use client";
+"use no memo";
 
 import NextLink from "next/link";
 import { usePathname } from "next/navigation";

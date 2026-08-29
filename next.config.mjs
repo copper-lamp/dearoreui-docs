@@ -7,7 +7,6 @@ const withNextra = nextra({});
 const isGithubActions = process.env.GITHUB_ACTIONS === "true";
 
 export default withNextra({
-    reactStrictMode: true,
     output: "export",
     images: { unoptimized: true },
     ...(isGithubActions && {
