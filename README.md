@@ -1,23 +1,24 @@
 <div align="center">
   <h1>◆ DearOreUI Docs</h1>
   <p><strong>Built for OreUI. Customized for creators.</strong></p>
-  <p>The official documentation site for DearOreUI — an OreUI runtime docs hub for extension developers.</p>
+  <p>The official documentation and learning site for the <a href="https://github.com/copper-lamp/Dear-OreUI">DearOreUI</a> runtime — covering the runtime, the offline designer, and example mods.</p>
 
   <p>
-    <a href="content/index.mdx">Home</a>
+    <a href="https://copper-lamp.github.io/dearoreui-docs/">Live site</a>
     ·
     <a href="content/guide/getting-started.mdx">Getting started</a>
     ·
-    <a href="https://github.com/copper-lamp/dearoreui-docs/issues">Report an issue</a>
+    <a href="https://github.com/copper-lamp/Dear-OreUI">Core runtime</a>
     ·
-    <a href="../Docs/Web-文档站设计-需求架构执行.md">Design doc</a>
+    <a href="https://github.com/copper-lamp/DearOreUI-dev-tools">Designer</a>
+    ·
+    <a href="https://github.com/copper-lamp/dearoreui-docs/issues">Report an issue</a>
     ·
     <a href="README_ZH.md">简体中文</a>
   </p>
 </div>
 
-> [!WARNING]
-> The docs site is still in an early stage of development. Content and structure are subject to change. All pages are working drafts and are not guaranteed to stay in sync with the runtime contracts.
+Docs are versioned and cover 130+ pages across releases and guides.
 
 ## Quick Start
 
@@ -86,21 +87,33 @@ To add a page, just drop an `.mdx` file under `content/` and register its nav ti
 | `pnpm start` | Run the production build |
 
 
+## Ecosystem
+
+This repo hosts the documentation for the DearOreUI toolchain:
+
+| Project | Repository | Role |
+| --- | --- | --- |
+| **DearOreUI** | [copper-lamp/Dear-OreUI](https://github.com/copper-lamp/Dear-OreUI) | Native LeviLamina runtime — extends OreUI at runtime |
+| **DearOreUI Designer** | [copper-lamp/DearOreUI-dev-tools](https://github.com/copper-lamp/DearOreUI-dev-tools) | Offline visual designer (Tauri) |
+| **DearOreUI Docs** | [copper-lamp/dearoreui-docs](https://github.com/copper-lamp/dearoreui-docs) | This repo — documentation & learning site |
+| **dearoreui-ExampleMod** | [magicobs0z/dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) | Progressive tutorial mod |
+| **dearoreui-repo** | [copper-lamp/dearoreui-repo](https://github.com/copper-lamp/dearoreui-repo) | Self-hosted xmake package repo |
+
 ## Known Limitations
 
-- Content is currently limited (homepage + getting-started); other groups are not built yet.
-- i18n and static-export deployment are not configured yet.
-- Page content is manually synced from the `Docs/` design documents (single source of truth), so drift is possible.
+- JsonUI page docs are not covered: the docs track the OreUI stack's runtime contracts (see the core README "Compatibility").
+- Deployment uses GitHub Pages sub-path (`/dearoreui-docs`); i18n via a version selector rather than a dedicated locale router.
 
 ## Contributing
 
-- Content and architecture design docs live in `Docs/` at the repo root (`Web-文档站设计-需求架构执行.md`, `Web-Nextra4迁移-需求架构执行.md`).
+- Docs source live in `content/` (versioned under `v0.1.1/`, `v0.1.2/`).
 - To add a page: place an `.mdx` file under `content/` and update `_meta.ts`. For layout/theme changes, keep configuration centralized and avoid scattering styles.
+- Design documents live in `Docs/` at the repo root (single source of truth for architecture decisions).
 
 ## Acknowledgements
 
-Special thanks to [Nextra](https://github.com/shuding/nextra) and [nextra-theme-docs](https://github.com/shuding/nextra/tree/main/packages/nextra-theme-docs) for the documentation framework, and to [HeroUI](https://heroui.com) for the visual language reference.
+Special thanks to [Nextra](https://github.com/shuding/nextra) and [nextra-theme-docs](https://github.com/shuding/nextra/tree/main/packages/nextra-theme-docs) for the documentation framework.
 
 ## License
 
-License is TBD until confirmed by the project author.
+[CC0-1.0](https://github.com/copper-lamp/Dear-OreUI/blob/main/LICENSE), matching the DearOreUI runtime.
