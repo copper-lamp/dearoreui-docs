@@ -18,6 +18,8 @@ DearOreUI-windows-x64.zip
 └── README.md
 ```
 
+tips：把压缩包拖入你的[LeviLauncher](https://github.com/LiteLDev/LeviLauncher)即可自动安装！
+
 ### 2. 部署到客户端
 
 把压缩包里的 **`DearOreUI.dll`** 复制到游戏根目录的 `mods/` 文件夹：
@@ -47,9 +49,9 @@ DearOreUI-windows-x64.zip
 
 ### 3. 启动游戏
 
-启动客户端并进入世界列表页（`/play/all`）。如果安装成功，你会在页面上看到居中的 **DearOreUI DEMO** 覆盖层。这是内置演示，用来确认「注册 → 挂载 → 注入 → 显示」链路已打通。
+启动客户端并进入世界列表页（`/play/all`）。
 
-同时模组会在日志中打印一行数据目录，诊断文件就输出在那里：
+模组会在日志中打印一行数据目录，诊断文件就输出在那里：
 
 ```text
 DearOreUI data dir: <数据目录>
@@ -116,9 +118,7 @@ xmake -v -y
 
 1. **日志出现 `DearOreUI data dir:`** → 模组已加载，运行时已初始化。
 2. **数据目录存在 `diagnostics.jsonl`** → 诊断链路正常，所有事件（Hook、注入、显示）都会写入这里。
-3. **世界列表页显示 DEMO 覆盖层** → 真实显示链路打通。
 
-如果第 3 步不满足，先看 `diagnostics.jsonl` 里有没有 `ready` 事件，再按 [快速开始](./getting-started) 的排查表定位。
 
 ## 兼容性
 
