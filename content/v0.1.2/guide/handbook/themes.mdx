@@ -1,0 +1,43 @@
+# 主题
+
+> DearOreUI 的主题令牌系统对齐原版 OreUI 的 `menus-theme-*.css` / `gameplay-theme-*.css` 设计变量。组件渲染器消费这些令牌，观感与原版一致。
+
+## 令牌分类
+
+| 类别 | 内容 |
+| --- | --- |
+| 颜色 | `colorPrimary` / `colorSecondary` / `colorDestructive` / `colorText` / `colorMuted` / `colorDisabled` / `colorPanel` |
+| 字体 | `fontHeading` / `fontSubheading` / `fontUi` / `fontBody` |
+| 字号 | `fontSizes[0..7]`（10~64px） |
+| 行高 | `lineHeights[0..5]`（20~80px） |
+| 字距 | `letterSpacings[0..1]`（4 / 8px） |
+| 间距 | `spaces[0..7]`（4~64px） |
+| 纹理 | `textures`（语义纹理键 → `TextureSpec` 覆盖表） |
+
+## 纹理覆盖
+
+`ThemeTokens::textures` 是语义纹理键（`<family>.<variant>.<state>`）到 `TextureSpec` 的覆盖表。默认为空：渲染器回退到 `VanillaAssets::texture(key)` 查找原版纹理。
+
+```cpp
+// Mod 覆盖某个纹理
+ThemeTokens theme = defaultThemeTokens();
+theme.textures["pressable.primary.default"] = TextureSpec{...};
+```
+
+## 渲染链路
+
+```text
+ThemeTokens（颜色 / 字体 / 字号 / 纹理覆盖）
+   │  ComponentRenderer 消费
+   ▼
+border-image: url(<resolved>) <slice>;   ← 9-slice 纹理
+border-width: <width>; border-image-outset: <outset>;
+   ▼
+cohtml::View::ExecuteScript → 真实 OreUI 页面渲染
+```
+
+## 相关
+
+- [颜色](./colors) —— 颜色令牌详解
+- [深色主题](./dark-mode) —— OreUI 原生深色
+- [组件总览](../../components/overview)

@@ -1,0 +1,61 @@
+# Agent Skills
+
+> DearOreUI 为 AI 辅助开发提供技能包（Agent Skills），把运行时契约、组件库、布局 / 样式 / 通信约束打包成 AI 可直接消费的指令。加载技能后，AI 生成的 UI 代码与运行时能力严格对齐。v0.1.2 起提供**单个合并技能**，可一键下载。
+
+## 什么是 Agent Skills
+
+Agent Skills 是面向 AI 编码助手的**技能包**：将 DearOreUI 的 API 契约、37 种组件、引擎级布局 / 样式 / 动画 / 安全约束沉淀为一份 AI 可加载的 `SKILL.md`。AI 加载后，能从「声明式 `ComponentSpec` → 序列化 → 注入 → 通信 → 注销」整条链路按真实能力生成代码，而不是凭文档想象。
+
+## 唯一技能：DearOreUI UI 编写技能（v0.1.2）
+
+一份文件含全部维度：
+
+| 维度 | 内容 |
+| --- | --- |
+| 组件契约 | `UiManifest` / `ComponentSpec`（37 种 `ComponentKind`：14 原子 + 23 组合） / `DomNode` 序列化 `{t,s,x,a,c}` |
+| 布局引擎 | flex-only、动画仅 transform/opacity、全屏 `position:fixed`+四边 0、显式像素几何 |
+| 样式通道 | `element.style.cssText` 唯一可靠；innerHTML 注入的 style 被丢弃 |
+| 主题 / 动画 | 颜色 / 字体令牌、9-slice `border-image`、progress keyframes |
+| 安全校验 | v0.1.2 fail-closed：拒绝 script/iframe/on* / 危险 URL |
+| 通信 / 生命周期 | `publishEvent` / `subscribeFrame` / `registerHostMethod`、facet 单发限制、注销顺序模板 |
+| 闭环模板 | `registerMod → registerComponent → 通信 → shutdown` 最小可编译示例 |
+
+**一键下载**：
+
+[⬇︎ 下载 DearOreUI UI 编写技能（dearoreui-ui-skill.md）](/skills/v0.1.2/dearoreui-ui-skill.md)
+
+## 使用方式
+
+把下载的技能文件交给你的 AI 助手（作为技能 / 系统提示的一部分），然后在提示里引用它：
+
+```text
+根据 DearOreUI UI 编写技能，生成一个居中面板：包含标题、一个主按钮和一个危险操作按钮。
+```
+
+AI 会按真实契约生成：
+
+```cpp
+ComponentSpec panel;
+panel.kind  = ComponentKind::Panel;
+panel.label = "设置";
+
+ComponentSpec save;
+save.kind    = ComponentKind::Button;
+save.variant = "primary";
+save.label   = "保存";
+
+ComponentSpec danger;
+danger.kind    = ComponentKind::Button;
+danger.variant = "destructive";
+danger.label   = "删除";
+
+panel.children = {save, danger};
+```
+
+技能文件中的「陷阱 Checklist」会在生成时自动规避引擎级错误（`100vw/vh`、grid、内联 style、facet 二次 dispatch 等）。
+
+## 相关
+
+- [给 AI 开发者的契约](./handbook/agent-ui) —— 能力矩阵与渐进式 API
+- [组件总览](../components/overview) —— 37 种组件（14 原子 + 23 组合）
+- [离线调试](./offline-debugging) —— 不进游戏预览你的 UI

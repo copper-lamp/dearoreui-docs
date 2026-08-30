@@ -1,0 +1,55 @@
+# 创作
+
+> 组件组合是 DearOreUI 的核心创作方式：用 `ComponentSpec` 树描述界面，运行时负责渲染。这一页教你如何组合组件构建完整界面。
+
+## 组件树
+
+`ComponentSpec` 支持嵌套，通过 `children` 构建组件树：
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+// 面板 → 标题 + 按钮组
+ComponentSpec panel;
+panel.kind  = ComponentKind::Panel;
+panel.label = "设置";
+
+ComponentSpec title;
+title.kind    = ComponentKind::Text;
+title.variant = "heading";
+title.label   = "显示设置";
+
+ComponentSpec button;
+button.kind    = ComponentKind::Button;
+button.variant = "primary";
+button.label   = "应用";
+
+panel.children.push_back(title);
+panel.children.push_back(button);
+```
+
+## 组合模式
+
+| 模式 | 说明 | 示例 |
+| --- | --- | --- |
+| 容器 + 内容 | 面板/卡片承载子组件 | Panel → Text + Button |
+| 列表 | 多个 ListItem 组成菜单 | ListItem × N |
+| 导航 | TabBar 切换内容 | TabBar → Panel |
+| 表单 | Input + Button 组合 | Input + Button |
+
+## 原始 DOM
+
+需要完全控制时，可以用 `body` 字段注入原始 DOM：
+
+```cpp
+ComponentSpec panel;
+panel.kind = ComponentKind::Panel;
+panel.body = { /* render::DomNode 树 */ };
+```
+
+## 相关
+
+- [组件总览](../../components/overview) —— 37 种组件（14 原子 + 23 组合）
+- [组件规格](../../components/overview#组件规格componentspec) —— ComponentSpec 字段详解

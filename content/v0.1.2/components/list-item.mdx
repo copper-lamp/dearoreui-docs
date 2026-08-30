@@ -1,0 +1,54 @@
+# 列表项 ListItem
+
+> 列表条目，用于菜单、设置项等列表场景。复用原版 `--listItem*` 主题变量，支持 base / action / additionalAction 三种变体。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec item;
+item.kind    = ComponentKind::ListItem;
+item.variant = "action";      // base / action / additionalAction
+item.label   = "设置项";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, item);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::ListItem` |
+| `label` | `string` | 列表项文字 |
+| `variant` | `string` | `base` / `action` / `additionalAction` |
+| `state` | `string` | 交互状态：`default` / `hovered` / `pressed` / `focused` / `pressedFocused` / `disabled` / `disabledFocused` |
+| `children` | `vector<ComponentSpec>` | 子组件（附加内容，如图标） |
+
+## 变体
+
+| 变体 | 说明 |
+| --- | --- |
+| `base` | 基础列表项（仅 default / focused 纹理） |
+| `action` | 可点击列表项（完整状态切换） |
+| `additionalAction` | 带附加操作的列表项 |
+
+## 渲染结构
+
+```text
+<div data-component="listItem">       ← 9-slice 纹理背景 + flex 横向布局
+  <div>列表项文字</div>                ← 标签（Minecraft Seven v2, Medium）
+  ...子组件（图标等）...
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

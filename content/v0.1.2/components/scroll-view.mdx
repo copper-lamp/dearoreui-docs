@@ -1,0 +1,53 @@
+# 滚动视图 ScrollView
+
+> 可垂直滚动的容器，内容超出时出现滚动条。复用透明面板的滚动模式，`overflow-y: auto`。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec scroll;
+scroll.kind  = ComponentKind::ScrollView;
+scroll.label = "可用模组列表";
+
+ComponentSpec item;
+item.kind  = ComponentKind::ListItem;
+item.label = "模组 A";
+scroll.children.push_back(item);
+// ...更多子项
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, scroll);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::ScrollView` |
+| `label` | `string` | 可选标题 |
+| `children` | `vector<ComponentSpec>` | 滚动内容（列表项等） |
+| `style` | `string` | 高度覆盖（默认撑满父容器） |
+
+## 渲染结构
+
+```text
+<div data-component="scroll-view">
+  overflow-y:auto; height:100%
+  ...children...
+</div>
+```
+
+> [!NOTE]
+> cohtml 的滚动行为以真实客户端为准；布局偏差时先参考[造型](../guide/handbook/styling) 的布局约束。
+
+## 相关
+
+- [组件总览](./overview)
+- [滚动列表](./scrolling-list) —— 滚动 + 列表项组合

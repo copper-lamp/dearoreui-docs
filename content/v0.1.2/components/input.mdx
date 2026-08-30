@@ -1,0 +1,49 @@
+# 输入框 Input
+
+> 文本输入框（inputLegend），带提示文本。复用原版 `--inputLegend*` 主题变量：深色包装背景 + Minecraft Seven v2 提示字体。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec input;
+input.kind  = ComponentKind::Input;
+input.label = "请输入名称";   // 提示文本（hint）
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, input);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Input` |
+| `label` | `string` | 提示文本（hint），显示在输入框上方 |
+| `disabled` | `bool` | 是否禁用 |
+
+## 渲染结构
+
+输入框渲染为两层：
+
+```text
+<div data-component="input">          ← 包装（深色背景 + 内边距 + 文字阴影）
+  <div>提示文本</div>                  ← hint（Minecraft Seven v2, 1.6rem）
+  <input type="text" />               ← 输入字段（聚焦时高亮边框）
+</div>
+```
+
+## 交互状态
+
+输入字段聚焦时自动切换高亮边框（`border-color: #fff`），无需手动设置。
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

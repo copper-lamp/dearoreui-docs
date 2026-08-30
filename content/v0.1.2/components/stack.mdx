@@ -1,0 +1,51 @@
+# 堆叠 Stack
+
+> 垂直 / 水平堆叠布局，用 `orientation` 控制方向。纯 CSS flex，不依赖纹理，离线与运行时观感一致。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec stack;
+stack.kind        = ComponentKind::Stack;
+stack.orientation = "row";    // column（默认）/ row
+stack.label       = "工具栏";
+
+ComponentSpec button;
+button.kind    = ComponentKind::Button;
+button.label   = "保存";
+stack.children.push_back(button);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, stack);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Stack` |
+| `orientation` | `string` | `column`（默认）或 `row` |
+| `label` | `string` | 可选分组名（section 用） |
+| `children` | `vector<ComponentSpec>` | 堆叠的子组件 |
+| `style` | `string` | 可覆盖间距（`gap`）等 |
+
+## 渲染结构
+
+```text
+<div data-component="stack">
+  display:flex; flex-direction:column|row; gap:<space>
+  ...children...
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme) —— 间距令牌（`spaces`）

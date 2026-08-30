@@ -1,0 +1,44 @@
+# 徽标 Badge
+
+> 角标/徽章：bubble + 文本。用于数量提示、状态标记。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec badge;
+badge.kind  = ComponentKind::Badge;
+badge.label = "3";          // 徽标内容
+badge.variant = "base";    // base / action
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, badge);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Badge` |
+| `label` | `string` | 徽标文本（数量/状态） |
+| `variant` | `string` | `base` / `action`（气泡变体） |
+| `state` | `string` | 状态切换（default 等） |
+
+## 拼装结构
+
+```text
+bubble
+  └─ Text（徽标内容，小字号居中）
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [气泡](./bubble)
+- [文本](./text)

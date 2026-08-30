@@ -1,0 +1,32 @@
+# 颜色
+
+> DearOreUI 的颜色令牌对齐原版 OreUI 的 `--colors*` 设计变量（menus-theme :root）。组件渲染器消费这些令牌，观感与原版一致。
+
+## 颜色令牌
+
+| 令牌 | 默认值 | 说明 |
+| --- | --- | --- |
+| `colorPrimary` | `#3c8527` | 主色（绿色），用于主操作 |
+| `colorSecondary` | `#d0d1d4` | 次色，用于次要元素 |
+| `colorDestructive` | `#ca3636` | 危险色（红色），用于删除等操作 |
+| `colorText` | `#ffffff` | 文本色 |
+| `colorMuted` | `#b1b2b5` | 弱化文本色 |
+| `colorDisabled` | `#d0d1d4` | 禁用色 |
+| `colorPanel` | `rgba(0,0,0,0.72)` | 面板背景 |
+
+## 语义化使用
+
+颜色通过**语义命名**使用，而不是直接写色值：
+
+```cpp
+// ✅ 语义化：表达意图
+button.variant = "destructive";   // 危险操作 → 自动使用 colorDestructive
+
+// ❌ 硬编码：换主题时失效
+button.style = "color:#ca3636;";
+```
+
+## 相关
+
+- [主题](./themes) —— 主题令牌系统
+- [组件总览](../../components/overview)

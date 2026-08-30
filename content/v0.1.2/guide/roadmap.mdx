@@ -1,0 +1,58 @@
+# 路线图
+
+> DearOreUI 的阶段进展与边界。。
+
+## 已完成
+
+| 阶段 | 内容 | 状态 |
+| --- | --- | --- |
+| 阶段 0 | 运行时事实与 Hook 候选点验证（TechStack / SceneProvider / Router / ClientUpdate） | ✅ |
+| 阶段 1 | 公共类型与诊断基础；主动导航 PoC 收口 | ✅ |
+| 阶段 2 | Runtime、Mod、API 门面 | ✅ |
+| 阶段 3 | Hook、Capability、PageContext 生命周期 | ✅ |
+| 阶段 4 | Source（文件系统快照）、Resource（索引/URI）、最小 Inject | ✅ |
+| 阶段 5 | IPC 协议、Host 方法注册、Facet Provider 抽象、失败隔离 | ✅ |
+| 阶段 6 | 多 Mod 注册表、冲突与变换 | ✅ |
+| 阶段 7 | UI 挂载与声明式 UI（MountManager / UiPlanner / UiStateMachine） | ✅ |
+| 阶段 7.1 | 真实显示链路打通（ExecuteScript → CSSOM → DOM Overlay） | ✅ 真实客户端验证 |
+| 阶段 8 | 通用渲染器、组件库（37 种 `ComponentKind`）、JS→C++ Facet 通道、五组 API 门面 | ✅ 主体交付（验收矩阵 C4–C13 待采集） |
+
+阶段 8 的详细状态见 `Docs/DearOreUI-API状态核对-2026-08-22.md`：`IDearOreUIApi` 合并 Runtime / Resource / Mod / UI / Host 五组接口；JS→C++ 走游戏原生 Facet 协议，已验证一次完整 roundtrip。
+
+> 阶段 1~8 已随 **v0.1.2** 作为稳定运行时发布（2026-08-29）。发布内容与安全约束见[发行说明](../releases/v0-1-2)。
+
+## 能力现状
+
+- **真实显示链路**：只覆盖 OreUI 技术栈页面（如 `/play/all` 世界列表页）。
+- **声明式 UI**：`registerOverlay` / `registerPanel` / `registerButton` / `registerPage` / `registerComponent` 已交付。
+- **组件库**：37 种 `ComponentKind`（14 原子 + 23 组合），主题令牌对齐原版 `menus-theme` / `gameplay-theme`。
+- **双向桥接**：C++→JS 已交付；JS→C++ 已验证一次 roundtrip，同页多次调用受限。
+- **诊断**：`diagnostics.jsonl` 全事件流 + 21 项能力矩阵。
+- **安全校验**：v0.1.2 起外部 `htmlBody` 注册即校验（fail-closed，S2）。
+
+## 已知边界
+
+| 边界 | 说明 |
+| --- | --- |
+| 页面范围 | 主菜单、世界内界面为 JsonUI 技术栈，不在当前覆盖范围 |
+| JS→C++ 单发 | 每个 OreUI View 当前只有一次有效业务 dispatch，同页多次请求待攻坚 |
+| 安全校验 | 含内联脚本 / 事件属性 / 外链 URL / `oreui://` 越界的旧资源会在 v0.1.2 注册失败，需改用页面脚本 |
+| 组合组件交互 | 8.1.4 组合组件（dropdown 展开、modal 开关）仅渲染 + `state` 切换，点击事件 → C++ 分发在后续里程碑 |
+| 离线预览 | M8.1.3 离线预览页仍是遗留 |
+
+## 后续规划
+
+| 里程碑 | 内容 |
+| --- | --- |
+| v0.2.x | 阶段 8 验收矩阵 C4–C13（Page 生命周期、Host call、event push、切换清理）在目标客户端采集补齐 |
+| 同页多次 JS→C++ | 攻坚每个 View 的多次业务 dispatch |
+| v1.0 候选 | API 冻结、卸载回归、诊断设施精简 |
+| 文档与生态 | App 设计器对接、JsonUI 通道组件（P2/P3） |
+
+见 `Docs/development-index.md` 获取更细的模块规划。
+
+## 相关
+
+- [简介](./introduction) —— 能力一览与契约
+- [设计原则](./design-principles) —— 为什么 API 长这样
+- [发行记录](../releases) —— 版本与发布说明

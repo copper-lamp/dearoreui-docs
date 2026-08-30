@@ -1,0 +1,61 @@
+# 表单 Form
+
+> 表单容器：panel 内组合 input、formButton、formDivider。用于设置、注册、登录等输入场景。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec form;
+form.kind  = ComponentKind::Form;
+form.label = "服务器设置";
+
+ComponentSpec host;
+host.kind    = ComponentKind::Input;
+host.label   = "服务器地址";
+form.children.push_back(host);
+
+ComponentSpec port;
+port.kind    = ComponentKind::Input;
+port.label   = "端口";
+form.children.push_back(port);
+
+ComponentSpec save;
+save.kind    = ComponentKind::Button;
+save.variant = "primary";
+save.label   = "保存";
+form.children.push_back(save);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, form);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Form` |
+| `label` | `string` | 可选表单标题 |
+| `children` | `vector<ComponentSpec>` | 输入项、按钮、分隔线 |
+
+## 拼装结构
+
+```text
+panel
+  ├─ 标题（可选）
+  ├─ input × N
+  ├─ formDivider（原版 gameplay 变量）
+  └─ formButton（提交按钮）
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [输入框](./input)
+- [分隔线](./divider)

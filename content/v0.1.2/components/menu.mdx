@@ -1,0 +1,53 @@
+# 菜单 Menu
+
+> 菜单列表：panel 承载一组 listItem 选项。每个 children 渲染为一个菜单项。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec menu;
+menu.kind  = ComponentKind::Menu;
+menu.label = "操作";
+
+for (char const* name : {"复制", "粘贴", "删除"}) {
+    ComponentSpec item;
+    item.kind  = ComponentKind::ListItem;
+    item.label = name;
+    menu.children.push_back(item);
+}
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, menu);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Menu` |
+| `label` | `string` | 可选菜单标题 |
+| `children` | `vector<ComponentSpec>` | 菜单项，每个渲染为 listItem |
+
+## 拼装结构
+
+```text
+panel
+  ├─ 标题（可选）
+  └─ listItem × N（children 逐项渲染）
+```
+
+> [!NOTE]
+> 菜单项的点击 → C++ 分发属后续里程碑；当前用 `state` 表达选中/悬停。
+
+## 相关
+
+- [组件总览](./overview)
+- [列表项](./list-item)
+- [面板](./panel)

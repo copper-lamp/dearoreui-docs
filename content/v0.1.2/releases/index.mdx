@@ -1,0 +1,42 @@
+# 全部版本
+
+> DearOreUI 的版本发布记录。每个版本包含新增功能、修复与已知限制。完整变更日志以 [CHANGELOG.md](https://github.com/copper-lamp/Dear-OreUI/blob/main/CHANGELOG.md) 为准。
+
+## 最新版本
+
+### [v0.1.2](https://github.com/copper-lamp/Dear-OreUI/releases) — 2026-08-29
+
+首个稳定运行时发布：阶段 1~8 实现固化，外部 `htmlBody` 新增 fail-closed 安全校验。
+
+- OreUI / Coherent 运行时 Hook 层与真实显示链路（世界列表页验证）
+- 多 Mod 注册表、声明式 UI、Host / Facet 双向桥、诊断设施
+- 公共 API 门面 `IDearOreUIApi` + 纯 C ABI 桥 `DearOreUI_QueryApi`
+- 头文件归档移除，走 xmake-repo（git+commit-id）；lip install 支持
+- **安全约束**：外部 `htmlBody` 拒绝内联脚本 / 事件属性 / 外链 URL / `oreui://` 越界
+
+[阅读完整发布说明 →](./v0-1-2)
+
+### [v0.1.0](https://github.com/copper-lamp/Dear-OreUI/releases) — 2026-08-08
+
+首个发布版本：LeviLamina 26.10.x 原生模组脚手架。
+
+- LeviLamina 26.10.x 原生模组脚手架
+- Windows x64 客户端构建配置（C++20 / Clang-CL / xmake）
+- 初始模组元数据和 Tooth 打包配置
+- 运行时、API、兼容性、测试和开发架构文档
+- 英文和简体中文项目入口及贡献指南
+
+[阅读完整发布说明 →](./v0-1-0)
+
+## 发布节奏
+
+| 类型 | 频率 | 内容 |
+| --- | --- | --- |
+| 补丁版本 | 按需 | Bug 修复和次要改进 |
+| 次版本 | 月度 | 新组件和新功能 |
+| 主版本 | 架构变更时 | 破坏性变更 + 迁移指南 |
+
+## 下一步
+
+- [路线图](../guide/roadmap) —— 阶段 0~8 完成状态与后续规划
+- [快速入门](../guide/getting-started) —— 10 分钟跑通第一个 Overlay

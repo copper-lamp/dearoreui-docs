@@ -1,0 +1,51 @@
+# 筛选栏 FilterBar
+
+> 筛选条件栏，用于列表筛选场景。复用原版 `--filterBar*` 主题变量，支持 base / action 两种变体。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec bar;
+bar.kind    = ComponentKind::FilterBar;
+bar.variant = "base";       // base / action
+bar.label   = "全部";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, bar);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::FilterBar` |
+| `label` | `string` | 筛选条件文本 |
+| `variant` | `string` | `base` / `action` |
+| `children` | `vector<ComponentSpec>` | 子组件（当 `label` 为空时渲染） |
+
+## 变体
+
+| 变体 | 说明 |
+| --- | --- |
+| `base` | 基础筛选栏 |
+| `action` | 可操作筛选栏 |
+
+## 渲染结构
+
+```text
+<div data-component="filterBar">      ← 9-slice 纹理背景 + inline-block
+  <span>全部</span>                    ← 文本（Minecraft Seven v2, Small）
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

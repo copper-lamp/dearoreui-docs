@@ -1,0 +1,59 @@
+# 图标 Icon
+
+> 语义图标：`icon` 键引用原版 assets 素材，由 `VanillaAssets::icon(name)` 解析为具体 URL 与显示尺寸。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec icon;
+icon.kind = ComponentKind::Icon;
+icon.icon = "checkmark";    // VanillaAssets 语义键
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, icon);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Icon` |
+| `icon` | `string` | 素材语义键（见下表） |
+| `style` | `string` | 尺寸/颜色覆盖（默认 2.4rem） |
+
+## 素材键
+
+常用图标（`VanillaAssets::icon`，部分）：
+
+| 键 | 用途 |
+| --- | --- |
+| `checkmark` / `checkmarkSmall` | 勾选/开关 |
+| `chevronDown` / `chevronUp` / `chevronLeft` / `chevronRight` | 展开/折叠/导航 |
+| `close` | 关闭 |
+| `search` | 搜索 |
+| `plus` / `minus` | 增删 |
+| `settings` / `home` / `info` / `warning` / `error` | 状态与入口 |
+| `play` / `arrowDown` / `arrowLeft` / `arrowRight` / `arrowUp` | 播放/方向 |
+| `filter` / `edit` / `trash` / `copy` / `refresh` | 操作 |
+| `lock` / `unlock` / `menu` / `list` / `grid` / `world` / `envelope` / `bell` / `clock` | 通用 |
+
+按键类图标（`VanillaAssets::keyIcon`）见[按键图标](./key-icon)。
+
+## 渲染结构
+
+```text
+<img data-component="icon" src=".../hbui/assets/Checkmark-xxx.png">
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [图片](./image) —— 任意 URL 素材
+- [按键图标](./key-icon) —— 键盘/鼠标按键

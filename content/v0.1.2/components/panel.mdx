@@ -1,0 +1,67 @@
+# 面板 Panel
+
+> 容器面板，可承载标题、关闭按钮、装饰元素。复用原版 `--panel*` 主题变量，支持 8 种容器变体（default / dark / furnace / chest / enderChest / shulkerBox / barrel / modalForm）。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec panel;
+panel.kind  = ComponentKind::Panel;
+panel.label = "设置";          // 面板标题
+panel.style = "default";       // 容器变体（见下表）
+
+// 面板内容：子组件或原始 DOM
+ComponentSpec text;
+text.kind    = ComponentKind::Text;
+text.variant = "body";
+text.label   = "这是面板内容";
+panel.children.push_back(text);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, panel);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Panel` |
+| `label` | `string` | 面板标题（可选，显示在顶部） |
+| `style` | `string` | 容器变体（见下表） |
+| `children` | `vector<ComponentSpec>` | 子组件 |
+| `body` | `vector<DomNode>` | 原始 DOM 内容 |
+
+## 容器变体
+
+| 变体 | 说明 |
+| --- | --- |
+| `default` | 默认面板 |
+| `dark` | 深色面板 |
+| `furnace` | 熔炉风格 |
+| `chest` | 箱子风格 |
+| `enderChest` | 末影箱风格 |
+| `shulkerBox` | 潜影盒风格 |
+| `barrel` | 木桶风格 |
+| `modalForm` | 弹窗表单风格 |
+| `transparent` | 透明容器（可滚动，用于审查场景） |
+
+## 渲染结构
+
+```text
+<div data-component="panel">          ← 9-slice 纹理背景 + flex 纵向布局
+  <div>标题</div>                      ← 标题（Minecraft Ten v2, Large）
+  ...子组件 / 原始 DOM...
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

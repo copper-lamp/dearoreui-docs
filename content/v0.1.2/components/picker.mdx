@@ -1,0 +1,52 @@
+# 选择器 Picker
+
+> 下拉选择的高级封装：dropdown + 选项列表，`value` 表达当前选中项。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec picker;
+picker.kind  = ComponentKind::Picker;
+picker.label = "渲染距离";
+picker.value = "12";
+
+for (char const* opt : {"4", "8", "12", "16"}) {
+    ComponentSpec item;
+    item.kind  = ComponentKind::ListItem;
+    item.label = opt;
+    picker.children.push_back(item);
+}
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, picker);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Picker` |
+| `label` | `string` | 选择项标题 |
+| `value` | `string` | 当前选中值 |
+| `children` | `vector<ComponentSpec>` | 选项列表（listItem） |
+
+## 拼装结构
+
+```text
+dropdown（触发 + 当前值）
+  └─ panel（选项列表）
+       └─ listItem × N（value 对应项高亮）
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [下拉](./dropdown)
+- [列表项](./list-item)

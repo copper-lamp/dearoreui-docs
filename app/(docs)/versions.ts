@@ -15,7 +15,8 @@ export type DocVersion = {
 };
 
 export const versions: DocVersion[] = [
-    { id: "v0.1.1", label: "v0.1.1", isLatest: true },
+    { id: "v0.1.2", label: "v0.1.2", isLatest: true },
+    { id: "v0.1.1", label: "v0.1.1" },
 ];
 
 /** 默认/当前版本（首个条目），用于没有版本前缀的路径兜底 */

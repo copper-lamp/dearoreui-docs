@@ -1,0 +1,64 @@
+# 容器槽 ContainerSlot
+
+> 物品槽，用于容器界面（箱子、熔炉等）。复用原版 `--containerItem*` 主题变量，支持高亮 / 触摸选择状态与容器色调。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec slot;
+slot.kind  = ComponentKind::ContainerSlot;
+slot.label = "64";          // 数量角标（可选）
+slot.style = "chest";       // 容器色调：default / chest / barrel / shulker / furnace / ender / dark
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, slot);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::ContainerSlot` |
+| `label` | `string` | 数量角标（显示在右下角） |
+| `style` | `string` | 容器色调（见下表） |
+| `state` | `string` | `default` / `highlight` / `touchSelection` |
+
+## 容器色调
+
+| 色调 | 说明 |
+| --- | --- |
+| `default` | 默认物品槽 |
+| `chest` | 箱子色调 |
+| `barrel` | 木桶色调 |
+| `shulker` | 潜影盒色调 |
+| `furnace` | 熔炉色调 |
+| `ender` | 末影箱色调 |
+| `dark` | 深色色调 |
+
+## 状态
+
+| 状态 | 说明 |
+| --- | --- |
+| `default` | 普通 |
+| `highlight` | 高亮（选中） |
+| `touchSelection` | 触摸选择 |
+
+## 渲染结构
+
+```text
+<div data-component="containerSlot">  ← 3.8rem × 3.8rem 9-slice 纹理
+  <div>64</div>                       ← 数量角标（右下角，白色 + 阴影）
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

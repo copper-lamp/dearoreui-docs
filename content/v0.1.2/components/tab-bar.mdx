@@ -1,0 +1,63 @@
+# 标签栏 TabBar
+
+> 标签页导航栏，用于页面内切换。复用原版 `--tabBar*` 主题变量，每个标签独立支持状态切换。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec bar;
+bar.kind = ComponentKind::TabBar;
+
+// 每个标签是一个子组件（label + state）
+ComponentSpec tab1;
+tab1.kind  = ComponentKind::Text;
+tab1.label = "常规";
+tab1.state = "default";   // 当前选中标签用 pressed
+
+ComponentSpec tab2;
+tab2.kind  = ComponentKind::Text;
+tab2.label = "高级";
+tab2.state = "default";
+
+bar.children.push_back(tab1);
+bar.children.push_back(tab2);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, bar);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::TabBar` |
+| `children` | `vector<ComponentSpec>` | 每个子组件是一个标签（用 `label` 和 `state` 描述） |
+
+## 标签状态
+
+| 状态 | 说明 |
+| --- | --- |
+| `default` | 未选中 |
+| `pressed` | 选中（当前标签） |
+| `hovered` / `focused` | 悬停 / 聚焦 |
+
+## 渲染结构
+
+```text
+<div data-component="tabBar">         ← flex 横向布局
+  <div data-component="tab">常规</div> ← 每个标签独立纹理 + 状态
+  <div data-component="tab">高级</div>
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

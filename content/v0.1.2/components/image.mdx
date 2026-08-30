@@ -1,0 +1,53 @@
+# 图片 Image
+
+> 图片/动画素材：`src` 指定 URL，或 `icon` 键引用 assets。支持 png、gif、webm 等已加载素材。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec image;
+image.kind = ComponentKind::Image;
+image.src  = "/hbui/assets/SomeArtwork.png";   // 显式 URL
+```
+
+或用语义键：
+
+```cpp
+ComponentSpec image2;
+image2.kind = ComponentKind::Image;
+image2.icon = "world";    // 等价于 icon 组件
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, image);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Image` |
+| `src` | `string` | 显式素材 URL |
+| `icon` | `string` | 语义键（备选，走 VanillaAssets 表） |
+| `style` | `string` | 尺寸/object-fit 等 |
+
+> [!NOTE]
+> 原版 gif/webm 动画素材页面已加载，可直接 `<img src="/hbui/assets/xxx.gif">` 引用。运行时数据类素材（物品图标、头像）需游戏数据桥，见[设计资源](../guide/design-resources) 的 C 组说明。
+
+## 渲染结构
+
+```text
+<img data-component="image" src="<src|icon 解析结果>">
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [图标](./icon) —— 语义键素材
+- [设计资源](../guide/design-resources) —— assets 素材全貌

@@ -1,0 +1,144 @@
+# 组件总览
+
+> DearOreUI 组件库覆盖 Minecraft 基岩版 OreUI 设计系统的全部原子组件。每个组件由 `dearoreui::api::ComponentSpec` 描述，经 `ComponentRenderer` 渲染为 `render::DomNode` 树，与普通 Overlay 走同一条 CSSOM 渲染管线。
+
+## 基础交互
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [按钮 Button](./button) | 可点击的 pressable 按钮 | primary / secondary / neutral / destructive × normal / elevated |
+| [输入框 Input](./input) | 文本输入框（inputLegend） | hint 提示文本 |
+
+## 布局容器
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [面板 Panel](./panel) | 容器面板，可承载标题/关闭/装饰 | default / dark / furnace / chest / enderChest / shulkerBox / barrel / modalForm |
+| [卡片 Card](./card) | detailedCard 卡片 | base / action / additionalAction |
+| [分隔线 Divider](./divider) | 表单分隔线 | — |
+| [容器槽 ContainerSlot](./container-slot) | 物品槽 | default / highlight / touchSelection + 容器色调 |
+
+## 数据展示
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [文本 Text](./text) | 文本节点 | heading / body / hint 等 |
+| [列表项 ListItem](./list-item) | 列表条目 | base / action / additionalAction |
+| [按键图标 KeyIcon](./key-icon) | 键盘/鼠标按键图标 | A-Z、F1-F12、方向键、修饰键 |
+| [气泡 Bubble](./bubble) | 气泡提示 | base / action |
+
+## 导航
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [标签栏 TabBar](./tab-bar) | 标签页导航 | neutral |
+| [筛选栏 FilterBar](./filter-bar) | 筛选条件栏 | base / action |
+
+## 反馈
+
+| 组件 | 说明 | 变体 |
+| --- | --- | --- |
+| [提示框 Tooltip](./tooltip) | 悬浮文本提示 | — |
+| [进度条 Progress](./progress) | 进度指示 | radial / linear |
+
+## 主题
+
+| 页面 | 说明 |
+| --- | --- |
+| [主题令牌 Theme](./theme) | 颜色 / 字体 / 字号 / 纹理令牌 |
+
+## 组合组件（阶段 8.1.4）
+
+`ComponentKind` 共 37 种枚举。上表是 14 个原版风格原子组件；阶段 8.1.4 新增的 23 种组件按用途分五类，全部走同一条 `ComponentSpec → ComponentRenderer → DomNode → CSSOM` 链路。分类与源码 `ComponentKind` 的 L/B/N/I/D 分组一致。
+
+### 布局 L（纯 CSS）
+
+| 组件 | 说明 |
+| --- | --- |
+| [堆叠 Stack](./stack) | 垂直 / 水平堆叠（`orientation` 控制方向） |
+| [网格 Grid](./grid) | 等宽列网格（`columns` 控制列数） |
+| [滚动视图 ScrollView](./scroll-view) | 可垂直滚动容器 |
+| [分组 Section](./section) | 带可选标题的内容分组 |
+| [弹性间距 Spacer](./spacer) | `flex: 1` 弹性占位 |
+
+### 组合 B（由 A 组拼装）
+
+| 组件 | 拼装结构 |
+| --- | --- |
+| [弹窗 Modal](./modal) | backdrop → panel(modalForm) → 标题 + 内容 + 按钮组 |
+| [菜单 Menu](./menu) | panel → listItem 组 |
+| [滚动列表 ScrollingList](./scrolling-list) | scrollView → listItem 组 |
+| [下拉 Dropdown](./dropdown) | button 触发 + panel 选项列表 |
+| [表单 Form](./form) | panel → input 组 + formButton + formDivider |
+| [顶栏 NavigationBar](./navigation-bar) | 品牌区 + tabBar + keyIcon |
+| [通知 Toast](./toast) | panel/bubble + 文本 + 时间线动画 |
+| [搜索框 SearchField](./search-field) | input + 放大镜图标 |
+| [开关 Toggle](./toggle) | button 状态 + Checkmark 图标 |
+
+### 导航 N
+
+| 组件 | 说明 |
+| --- | --- |
+| [面包屑 Breadcrumb](./breadcrumb) | 层级路径（text + 分隔符） |
+| [分页 Pager](./pager) | 圆点/页码按钮组（`value` 当前页） |
+
+### 交互 I
+
+| 组件 | 说明 |
+| --- | --- |
+| [多行输入 TextArea](./text-area) | `textarea` 元素（input 多行扩展） |
+| [滑条 Slider](./slider) | 轨道 + 手柄（`value`/`min`/`max`） |
+| [加减器 Stepper](./stepper) | button(−) + 值 + button(+) |
+| [选择器 Picker](./picker) | dropdown + 选项列表 |
+
+### 数据 D
+
+| 组件 | 说明 |
+| --- | --- |
+| [图标 Icon](./icon) | 语义键引用 assets 素材（`VanillaAssets::icon`） |
+| [图片 Image](./image) | `src` 或 `icon` 键引用 png/gif/webm |
+| [徽标 Badge](./badge) | bubble + 文本角标 |
+
+> [!NOTE]
+> 组合组件的交互（dropdown 展开、modal 开关、slider 拖动）当前提供渲染与 `state` 切换；点击事件 → C++ 分发属后续里程碑。
+
+## 组件规格（ComponentSpec）
+
+所有组件共享同一个声明式规格结构（[ComponentSpec.h](https://github.com/copper-lamp/Dear-OreUI/blob/main/src/api/types/ComponentSpec.h)）：
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 组件类型（37 种枚举：14 原子 + 23 组合） |
+| `id` | `string` | 布局锚点：在组件树中用作该节点的 DOM `id`（v0.1.2 R2） |
+| `label` | `string` | 主文本（按钮文字 / 面板标题 / 输入框提示） |
+| `variant` | `string` | 视觉变体（button: primary/secondary/neutral/destructive） |
+| `style` | `string` | 风格（button: normal/elevated；panel: default/dark/furnace/...） |
+| `disabled` | `bool` | 是否禁用 |
+| `state` | `string` | 交互状态（default/hovered/focused/pressed/disabled） |
+| `events` | `vector<string>` | 声明的事件（"click" / "change"） |
+| `children` | `vector<ComponentSpec>` | 子组件树 |
+| `body` | `vector<DomNode>` | 原始 DOM 内容（panel/card 正文） |
+| `orientation` | `string` | stack 方向（column/row） |
+| `columns` | `int` | grid 列数 |
+| `icon` | `string` | icon/image 素材语义键 |
+| `src` | `string` | image 显式 URL |
+| `value` | `string` | slider/stepper/pager 当前值 |
+| `min` / `max` | `string` | slider 范围 |
+
+## 渲染链路
+
+```text
+ComponentSpec 树
+   │  ComponentRenderer（消费主题令牌）
+   ▼
+render::DomNode 树
+   │  通用 CSSOM 渲染器（与 Overlay 同管线）
+   ▼
+cohtml::View::ExecuteScript → 真实 OreUI 页面渲染
+```
+
+## 下一步
+
+- 查看 [主题令牌](./theme) 了解可用的颜色 / 字体 / 纹理
+- 查看 [快速开始](../guide/getting-started) 了解如何注册第一个组件
+- 查看 [环境页的组件分类](../guide/environment#组件分类) 了解 37 种枚举的全部分组

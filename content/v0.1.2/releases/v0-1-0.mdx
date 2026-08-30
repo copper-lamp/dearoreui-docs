@@ -1,0 +1,40 @@
+# v0.1.0 发布说明
+
+> 发布日期：2026-08-08 · 首个发布版本
+
+## 新增
+
+- LeviLamina 26.10.x 原生模组脚手架。
+- Windows x64 客户端构建配置，使用 C++20、Clang-CL 和 xmake。
+- 初始模组元数据和 Tooth 打包配置。
+- 运行时、API、兼容性、测试和开发架构文档。
+- 英文和简体中文项目入口及贡献指南。
+
+## 已知限制
+
+- OreUI 和 Coherent 运行时 Hook 尚未实现。
+- 原版 OreUI 资源快照尚未实现。
+- 运行时资源注入和 UI 挂载尚未实现。
+- 多 Mod 注册表、Host API、Facet Provider 和版本化变换尚未成为稳定功能。
+- 本版本应视为早期开发脚手架，而不是完整 OreUI 运行时。
+
+## 兼容性
+
+| 维度 | 目标 |
+| --- | --- |
+| 平台 | Windows x64 |
+| Minecraft | Bedrock 客户端（26.10.x） |
+| 加载器 | LeviLamina 26.10.x（客户端） |
+| 构建目标 | 原生共享库模组 |
+
+> [!WARNING]
+> 构建成功不代表运行时 OreUI 兼容性已经成立。涉及运行时的修改必须在固定的 Minecraft / LeviLamina 客户端中验证。
+
+## 安装
+
+从 [Releases](https://github.com/copper-lamp/Dear-OreUI/releases) 下载 `DearOreUI-windows-x64.zip`，将 `DearOreUI.dll` 放入客户端 `mods/` 目录。详见[安装与构建](../guide/installation)。
+
+## 下一步
+
+- [全部版本](./index) —— 版本总览
+- [路线图](../guide/roadmap) —— 阶段 0~8 完成状态与后续规划

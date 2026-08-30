@@ -1,0 +1,65 @@
+# v0.1.2 发布说明
+
+> 发布日期：2026-08-29 · 阶段 1~8 运行时稳定版
+
+v0.1.2 是 DearOreUI 的第一个**稳定运行时**发布。它把阶段 1~8 期间验证过的实现全部固化进公开 API，并首次加入对外部 `htmlBody` 的 fail-closed 安全校验。相比 v0.1.1，这是一次**非破坏性**的功能性更新，但下方「安全约束」一节值得旧资源的作者留意。
+
+## 新增
+
+- OreUI / Coherent 运行时 Hook 层：TechStack、SceneProvider、Router、`OreUI::View::initialize`、`OnReadyForBindings`、`triggerEvent`、`ClientInstance::update`。
+- 真实显示链路：捕获 `cohtml::View` → `OnReadyForBindings` 门控 → `CoherentHostBridge::sendScript` → CSSOM 构建 DOM Overlay，在世界列表页真实验证。
+- 原版资源快照：`FileSystemSourceReader` 读取 `gui/dist/hbui`，配 `ResourceUri` / `ResourceIndex` 路径与权限管理。
+- 多 Mod 注册表：注册 / 注销、依赖排序、冲突检测、每页面统一变更计划。
+- 声明式 UI：`registerMod` / `registerOverlay` → `UiPlanner` / `MountManager` / `UiStateMachine`；52 个组件 showcase 在真实客户端显示。
+- Host / Facet 桥：`HostDispatcher`、`HostMethodRegistry`、`OreUIFacetBridge`、`RuntimeInfoFacet`，JS→C++ 走游戏原生 Facet 协议并完成一次真实 roundtrip。
+- 公共 API 门面：`IDearOreUIApi` 合并 Runtime / Resource / Mod / Host / UI / Page / Event / Transform / Diagnostic / Frame / RuntimeReport；外部 Mod 经纯 C ABI 桥 `DearOreUI_QueryApi` 获取实例。
+- 页面 JS API：注入 `window.__DearOreUI__`（`bus`、`ipc`）与 `window.DearOreUI`（`call`、`report`）及基础 `oreui.*` 命名空间。
+- 诊断设施：JSONL 事件流、各阶段遥测、注入报告、崩溃探针。
+- 单元测试：注册表、变换、IPC、UI、组件、诊断覆盖。
+
+## 工程性变更（相对 v0.1.1）
+
+| 变更 | 说明 |
+| --- | --- |
+| 头文件归档移除 | DearOreUI 公开头以 header-only 形式走 `dearoreui-repo`（git + commit-id），不再发布 `DearOreUI-headers-*.zip` |
+| `tooth.json` | 新增 lip install 支持，可用 `lip` 一键安装 |
+| 发布打包 | 修复 zip 命名；CI 仅在推 tag / 手动触发时发布 |
+
+## 安全约束（S2，fail-closed）
+
+自 v0.1.2 起，所有外部 `htmlBody` 在**注册时即校验**，校验不通过直接拒绝：
+
+- 拒绝 `<script>` / `<iframe>` / `<object>` 标签；
+- 拒绝 `on*` 事件属性（`onclick`、`onerror` 等）；
+- 拒绝 `javascript:` / `file:` / `http:` / `data:` 等外链或内联资源型 URL；
+- 拒绝越过沙盒的 `oreui://` 资源路径（防目录穿越）。
+
+> [!WARNING]
+> 依赖上述不安全特性的旧版资源会在 v0.1.2 下注册失败。动态行为请改用页面脚本注入与 `oreui.event.on`，不要依赖内联脚本。
+
+## 已知限制
+
+- JsonUI 页面（主菜单、世界内界面）不在 OreUI 管线覆盖范围内。
+- 每个 OreUI View 目前只允许一次有效 JS→C++ 业务派发；同页多次调用待攻坚。
+- 资源 / 代码变换已内部实现，尚未作为公共 API 开放。
+- 公开事件订阅、页面订阅、诊断查询门面尚未形成。
+- 诊断设施（vtable 转储、ODS 钩子等）发布前需评估精简。
+- 卸载与生命周期清理路径仍需回归验证。
+- 仅对记录的目标版本验证过；其余版本状态为「未知」。
+
+## 兼容性
+
+| 维度 | 目标 |
+| --- | --- |
+| 平台 | Windows x64 |
+| Minecraft | Bedrock 客户端（26.10.x） |
+| 加载器 | LeviLamina 26.10.x（客户端） |
+| 构建目标 | 原生共享库模组 |
+
+> 建议 `add_requires("dearoreui 0.1.2")`。C++/JS API 与正常声明式资源保持兼容；仅含不安全 `htmlBody` 的资源需要修改。
+
+## 下一步
+
+- [全部版本](./index) —— 版本总览
+- [在你的模组中使用](../guide/environment) —— 4 课阶梯教程（默认完整日历）
+- [组件总览](../components/overview) —— 组件规格与 `id` 锚点

@@ -1,0 +1,88 @@
+# 工具链
+
+> DearOreUI 周边的开发工具与自动化：运行时构建、发布产物、App 设计器、文档站部署。这一页回答"从哪里拿到东西、怎么让链路自动跑起来"。
+
+## 运行时构建与发布
+
+发布版从 [Releases](https://github.com/copper-lamp/Dear-OreUI/releases) 下载，产物是 `DearOreUI-windows-x64.zip`（内含 `DearOreUI.dll`）。
+
+需要改源码时本地构建，工具链要求：
+
+| 依赖 | 要求 |
+| --- | --- |
+| 操作系统 | Windows x64 |
+| xmake | 最新稳定版 |
+| 编译器 | Visual Studio（含 Clang-CL）或 LLVM |
+| LeviLamina | 26.10.x 客户端开发包 |
+
+```powershell
+git clone https://github.com/copper-lamp/Dear-OreUI.git
+cd DearOreUI
+xmake repo -u
+xmake f -a x64 -m release -p windows --target_type=client -y
+xmake -v -y
+```
+
+构建产物在 `bin/`，`DearOreUI.dll` 即模组本体，安装步骤见[安装与构建](./installation)。
+
+发布流程与手动触发说明见 `DearOreUI/docs/RELEASE.md` 与 `docs/release-workflow-manual-trigger.md`。
+
+## 外部 Mod 开发
+
+外部 Mod 通过 DearOreUI 公开 API 集成。DearOreUI 是一份"header-only 公开头 + 运行期 C ABI 桥"的前置运行时：编译期头通过**自托管的 xmake-repo**（`dearoreui-repo`）声明式引入，不链接任何 import library。接入分两步：
+
+1. **编译期 —— 引入头文件**：在 `xmake.lua` 里添加自托管仓库并声明依赖，`include` 无需任何手动 `add_includedirs`：
+
+   ```lua
+   add_repositories("dearoreui-repo", "https://github.com/copper-lamp/dearoreui-repo.git")
+   add_requires("dearoreui") -- 或指定版本 add_requires("dearoreui 0.1.2")
+
+   target("my-mod")
+       add_packages("dearoreui")
+   ```
+
+   这样即可 `#include "api/IDearOreUIApi.h"` 等公开头。该包是 header-only，**只提供声明，不产生任何链接**。
+
+2. **运行期 —— 解析 C ABI 桥**：用 `GetProcAddress("DearOreUI_QueryApi")` 拿到 `IDearOreUIApi*`，见 [dearoreui-ExampleMod](https://github.com/magicobs0z/dearoreui-ExampleMod) 的 `loadBridge()`。DearOreUI 对外只导出这一个 C 符号（`bridge/DearOreUIBridge.h` 中的 `DearOreUI_QueryApi`）；其余 C++ 类型由公开头跨结构体 ABI 访问。
+
+加载顺序由 LeviLamina 原生依赖图保证，外部 Mod 需在 **`manifest.json`** 声明：
+
+```json
+"dependencies": [
+    { "name": "DearOreUI" }
+]
+```
+
+这一步负责"运行加载前 DearOreUI 已就绪、缺失则加载失败"。它与打包层的 `tooth.json` 依赖（用于自动安装前置）是**两回事**。自托管 `dearoreui-repo` 只解决编译期头文件的声明式引入，不参与运行期加载。
+
+详见[在你的模组中使用](./environment) 的「先看清楚：DearOreUI 负责什么」。
+
+## App 设计器
+
+`App/` 是基于 Tauri 2 的离线 OreUI 设计器，当前处于基础工程阶段（Rust + Vite + TypeScript），按 DearOreUI 的资源协议生成 HTML/CSS/JS。
+
+现状：工程骨架已就绪，导出流程对接运行时契约中。设计器产出应可直接用于 `registerOverlay` / `registerComponent`。
+
+## 文档站部署
+
+Web 文档站（本页所属站点）是独立仓库，Next.js 15 + Nextra 4，`output: 'export'` 静态导出。推送后由 GitHub Actions 自动构建并发布到 GitHub Pages。
+
+```text
+push（仓库默认分支）
+  ▼
+GitHub Actions（deploy-pages.yml）
+  ├─ pnpm install --frozen-lockfile
+  └─ pnpm build（→ out/）
+  ▼
+upload-pages-artifact → deploy-pages
+  ▼
+https://copper-lamp.github.io/dearoreui-docs/
+```
+
+本地预览：`pnpm dev`；构建校验：`pnpm build`（产物在 `out/`）。
+
+## 相关
+
+- [安装与构建](./installation) —— 运行时安装与源码构建
+- [在你的模组中使用](./environment) —— 外部 Mod 集成步骤
+- [路线图](./roadmap) —— 工具链相关的后续规划

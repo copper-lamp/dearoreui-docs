@@ -1,0 +1,59 @@
+# 给 AI 开发者的契约
+
+> DearOreUI 为 AI 辅助开发设计了一套机器可读的契约：能力矩阵 + 渐进式 API + 显式错误。AI 可以查询"运行时到底支持什么"，只生成可用的代码。
+
+## 能力矩阵
+
+运行时公开能力矩阵，每个能力有明确的支持等级：
+
+| 等级 | 含义 |
+| --- | --- |
+| `Supported` | 已支持 |
+| `Experimental` | 实验性 |
+| `Unknown` | 未知（不能当作已支持） |
+| `Unsupported` | 不支持 |
+
+```cpp
+// 查询能力支持等级
+auto level = oreui->checkSupport(Capability::UiMount);
+// → Supported / Experimental / Unknown / Unsupported
+```
+
+## 渐进式 API（L0–L6）
+
+API 按难度逐级开放，AI 生成代码的复杂度与能力等级匹配：
+
+```text
+L0 runtime      查询（只读、零副作用）
+L1 resource     资源（声明式注册）
+L2 page         页面（生命周期订阅）
+L3 ui           UI（挂载与显示）
+L4 host         宿主能力（权限校验的 C++↔JS 双向调用）
+L5 transform    代码变换（依赖排序 / 冲突检测 / 变换计划）
+L6 advanced     Facet 和原版兼容扩展（vtable 指纹 / 多版本 ABI）
+```
+
+普通场景生成 L1 声明式代码即可；只有需要页面生命周期、游戏能力或原版代码变换时才升级。
+
+## 显式错误
+
+`Result<T>` / `ErrorCode` 贯穿所有公共 API，AI 生成的集成代码可以显式处理冲突、校验失败、无效参数：
+
+```cpp
+auto result = oreui->registerOverlay(modId, ui, html);
+if (result.isErr()) {
+    // ErrorCode: InvalidArgument / ResourceConflict / NotFound ...
+    handle(result.error());
+}
+```
+
+## 契约先行
+
+- `api/` 门面是纯虚接口，命名空间 `dearoreui::api`。
+- 文档站示例与源码契约逐一对应，不凭文档想象。
+- 版本与兼容：`VersionConstraint`、能力矩阵、`VerifiedSince` 字段，兼容性判断有据可依。
+
+## 相关
+
+- [设计原则](../design-principles) —— 为什么 API 长这样
+- [在你的模组中使用](../environment) —— 集成指南

@@ -1,0 +1,51 @@
+# 网格 Grid
+
+> 等宽列网格布局，用 `columns` 控制列数。纯 CSS grid，子组件按行填充。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec grid;
+grid.kind    = ComponentKind::Grid;
+grid.columns = 4;    // 4 列等宽
+
+for (int i = 0; i < 8; ++i) {
+    ComponentSpec item;
+    item.kind  = ComponentKind::Text;
+    item.label = "项 " + std::to_string(i);
+    grid.children.push_back(item);
+}
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, grid);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Grid` |
+| `columns` | `int` | 列数（默认 1） |
+| `children` | `vector<ComponentSpec>` | 网格项，按行填充 |
+| `style` | `string` | 可覆盖间距（`gap`）等 |
+
+## 渲染结构
+
+```text
+<div data-component="grid">
+  display:grid; grid-template-columns:repeat(N,1fr); gap:<space>
+  ...children 按行填充...
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [堆叠](./stack) —— 单方向布局

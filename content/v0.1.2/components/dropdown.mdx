@@ -1,0 +1,58 @@
+# 下拉 Dropdown
+
+> 下拉选择：触发按钮 + 选项列表（children 为 listItem），可带 Chevron 图标。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec dropdown;
+dropdown.kind  = ComponentKind::Dropdown;
+dropdown.label = "难度";
+
+ComponentSpec selected;
+selected.kind  = ComponentKind::Text;
+selected.label = "普通";
+dropdown.children.push_back(selected);
+
+ComponentSpec option;
+option.kind  = ComponentKind::ListItem;
+option.label = "困难";
+dropdown.children.push_back(option);
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, dropdown);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Dropdown` |
+| `label` | `string` | 触发按钮文字 |
+| `children` | `vector<ComponentSpec>` | 选项列表（listItem） |
+| `state` | `string` | `default` / 展开状态（当前仅 state 切换） |
+
+## 拼装结构
+
+```text
+button（触发）
+  └─ chevronDown icon（提示可展开）
+panel（选项列表）
+  └─ listItem × N
+```
+
+> [!NOTE]
+> 展开/收起交互仅通过 `state` 切换表达，点击事件 → C++ 分发属后续里程碑。
+
+## 相关
+
+- [组件总览](./overview)
+- [列表项](./list-item)
+- [选择器](./picker) —— 下拉 + 列表的高级封装

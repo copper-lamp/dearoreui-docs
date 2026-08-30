@@ -1,0 +1,48 @@
+# 造型
+
+> DearOreUI 的样式通道基于 cohtml 引擎的真实行为。这一页告诉你样式是怎么生效的，以及有哪些引擎级约束需要遵守。
+
+## 样式通道
+
+cohtml 引擎的样式注入有两条通道，只有一条可靠：
+
+| 通道 | 可靠性 | 说明 |
+| --- | --- | --- |
+| `element.style.cssText` | ✅ 可靠 | CSSOM 唯一可靠通道，运行时设置样式 |
+| HTML 内联 `style` 属性 | ❌ 丢失 | cohtml 会丢弃 `innerHTML` 注入的 `style` 属性，`getAttribute('style')` 也拿不到 |
+
+```js
+// ✅ 可靠：通过 cssText 设置样式
+element.style.cssText = "color:#fff;font-size:16px;";
+
+// ❌ 丢失：innerHTML 注入的 style 属性会被丢弃
+element.innerHTML = '<div style="color:#fff">text</div>';
+```
+
+## 9-slice 纹理
+
+原版组件观感的本质是 **border-image 9-slice 纹理**：
+
+```text
+border-image: url(<resolved>) <slice>;
+border-width: <width>;
+border-image-outset: <outset>;
+```
+
+组件渲染器输出这些属性，观感即与原版一致。
+
+## 布局约束
+
+cohtml 对 `position: fixed` 的百分比尺寸解析有特殊行为：
+
+| 约束 | 说明 |
+| --- | --- |
+| `fixed` + `width:100%` | 解析到最近的定位祖先，而非视口 |
+| 嵌套在无尺寸容器中 | 会塌缩为 0×0 |
+
+**修复**：容器自身全屏（`fixed` + `100%`），子层用 `absolute; top/left/right/bottom: 0` 撑满。
+
+## 相关
+
+- [主题](./themes) —— 主题令牌系统
+- [动画](./animation) —— 动画与过渡

@@ -1,0 +1,42 @@
+# 提示框 Tooltip
+
+> 悬浮文本提示框，用于鼠标悬停时显示说明。复用原版 `--tooltip*` 主题变量（gameplay 作用域），单纹理渲染。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec tooltip;
+tooltip.kind  = ComponentKind::Tooltip;
+tooltip.label = "按住 Shift 疾跑";
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, tooltip);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Tooltip` |
+| `label` | `string` | 提示文本 |
+| `children` | `vector<ComponentSpec>` | 子组件（当 `label` 为空时渲染） |
+
+## 渲染结构
+
+```text
+<div data-component="tooltip">        ← 9-slice 纹理背景
+  <span>按住 Shift 疾跑</span>         ← 白色文本（Minecraft Seven v2, Small）
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [主题令牌](./theme)

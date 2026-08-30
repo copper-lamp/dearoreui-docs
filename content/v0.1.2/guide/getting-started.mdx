@@ -1,0 +1,108 @@
+# 快速开始
+
+> 本文带你从零运行 DearOreUI，并在 OreUI 页面上显示第一个由 Mod 注册的界面。全程约 10 分钟。
+
+## 在开始之前
+
+DearOreUI 是运行在客户端里的原生模组，使用前请确认你的环境满足以下条件：
+
+| 依赖 | 要求 |
+| --- | --- |
+| 操作系统 | Windows x64 |
+| Minecraft | Bedrock 客户端（26.10.x） |
+| 加载器 | LeviLamina 26.10.x（客户端） |
+| DearOreUI | 最新发布版（`DearOreUI.dll`） |
+
+> [!NOTE]
+> DearOreUI 当前仅覆盖 **OreUI 技术栈**页面（例如世界列表页 `/play/all`）。主菜单、世界内界面属于 JsonUI 技术栈，暂不支持。
+
+## 安装
+
+1. 从 [Releases](https://github.com/copper-lamp/Dear-OreUI/releases) 下载最新的 `DearOreUI.dll`。
+2. 将 DLL 放入客户端的 `mods/` 目录。
+3. 启动游戏并进入世界列表页（`/play/all`）。
+
+安装成功的标志：世界列表页中央出现一个居中的 **DearOreUI DEMO** 覆盖层。这是内置的演示 Overlay，用来确认「注册 → 计划 → 挂载 → 注入 → 显示」链路已打通。
+
+模组同时会在数据目录输出诊断文件（例如 `diagnostics.jsonl`），日志中的 `DearOreUI data dir:` 一行会告诉你它的位置。
+
+## 编写第一个 Overlay
+
+DearOreUI 的扩展模型是**声明式**的：你的 Mod 先注册自身，再声明要显示的 UI，运行时负责剩下的渲染和注入。下面是一个最小示例：
+
+```cpp
+#include "ll/api/mod/RegisterHelper.h"
+#include "api/IDearOreUIApi.h"
+#include "api/manifest/ModManifest.h"
+#include "api/manifest/UiManifest.h"
+
+using namespace dearoreui::api;
+
+// 获取 DearOreUI 运行时公开 API 的入口（具体方式见下文）
+// IDearOreUIApi* oreui = ...;
+
+bool onLoad() {
+    // 1. 注册 Mod：先注册，才能注册资源和 UI
+    ModManifest manifest;
+    manifest.id           = ModId{"my-first-ui"};
+    manifest.modNamespace = "my_first_ui";
+    manifest.modVersion   = Version{1, 0, 0};
+
+    auto modResult = oreui->registerMod(manifest);
+    if (modResult.isErr()) {
+        return false; // 注册失败，读取 modResult.error()
+    }
+
+    // 2. 声明一个全屏 Overlay
+    UiManifest ui;
+    ui.modNamespace = "my_first_ui";
+    ui.id           = "hello";
+    ui.kind         = UiKind::Overlay;
+    ui.pageScopes   = {PageScope::Any}; // 在所有 OreUI 页面显示
+    ui.anchor       = UiAnchor::Center; // 居中
+    ui.fingerprint  = "hello-overlay-v1";
+
+    auto uiResult = oreui->registerOverlay(
+        ModId{"my-first-ui"},
+        ui,
+        "<div>Hello, DearOreUI!</div>"
+    );
+
+    return uiResult.isOk();
+}
+
+LL_REGISTER_MOD(MyMod, onLoad);
+```
+
+### 这段代码做了什么
+
+1. **注册 Mod**：`registerMod` 会校验 Manifest（命名空间、版本、依赖），并把 Mod 记入多 Mod 注册表。Mod 未注册前，后续的资源 / UI 注册都会失败。
+2. **声明 UI**：`UiManifest` 描述了这个 UI 长什么样：类型（`Overlay`）、显示范围（`pageScopes`）、位置（`anchor`）和指纹（`fingerprint`，用于冲突检测）。
+3. **注册 Overlay**：`registerOverlay` 接收 UI 描述和一段 HTML 正文，返回一个 `RegistrationHandle`，之后可以用它注销 UI。
+
+### 关于获取 API 入口
+
+示例里的 `oreui` 入口当前取自纯 C ABI 桥：用 `GetModuleHandleW(L"DearOreUI.dll")` + `GetProcAddress(...、"DearOreUI_QueryApi")` 拿到 `IDearOreUIApi*`，再调用 `registerMod` → `registerOverlay`，流程与本例一致。完整的集成步骤见[在你的模组中使用](./environment)。
+
+## 验证
+
+启动游戏并进入世界列表页，如果：
+
+- 能看到你的 Overlay 内容 → 链路成功。
+- 看不到 → 按以下顺序排查：
+
+| 现象 | 可能原因 |
+| --- | --- |
+| 日志里没有 `ready` 事件 | 未捕获到 OreUI 页面，或 LeviLamina 版本不符 |
+| 有 `ready` 但没有显示 | 页面不在 OreUI 技术栈内（主菜单 / 世界内） |
+| 样式异常 | cohtml 会丢弃 HTML 里内联的 `style` 属性，请用 CSS 类或运行时设置样式 |
+| 注册报错 | 检查 `modResult.error()` / `uiResult.error()`，命名空间冲突或校验失败 |
+
+所有注册、计划、注入事件都会写入 `diagnostics.jsonl`，排查问题时先看它。
+
+## 下一步
+
+- 跟着 [4 课阶梯教程](./environment) 一步步搭一个居中面板日历（01 连运行时 → 04 完整日历）
+- 了解 [组件总览](../components/overview)（`ComponentSpec`、37 种组件）
+- 了解 [诊断与排查](./environment#验证和排查)（日志、诊断事件、真机检查清单）
+- 了解 [设计原则](./design-principles) —— 为什么 API 长这样

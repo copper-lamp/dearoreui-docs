@@ -1,0 +1,50 @@
+# 分页 Pager
+
+> 分页或轮播指示：一组 button（圆点/页码），`value` 表达当前页。
+
+## 用法
+
+```cpp
+#include "component/ComponentSpec.h"
+
+using namespace dearoreui::component;
+
+ComponentSpec pager;
+pager.kind  = ComponentKind::Pager;
+pager.value = "2";    // 当前页（0 起）
+
+// 4 个页码按钮
+for (int i = 0; i < 4; ++i) {
+    ComponentSpec dot;
+    dot.kind  = ComponentKind::Button;
+    dot.style = "normal";
+    pager.children.push_back(dot);
+}
+```
+
+注册到页面：
+
+```cpp
+oreui->registerComponent(ModId{"my-mod"}, uiManifest, pager);
+```
+
+## 属性
+
+| 字段 | 类型 | 说明 |
+| --- | --- | --- |
+| `kind` | `ComponentKind` | 固定为 `ComponentKind::Pager` |
+| `value` | `string` | 当前页/轮播项索引 |
+| `children` | `vector<ComponentSpec>` | 页码/圆点按钮 |
+
+## 渲染结构
+
+```text
+<div data-component="pager">
+  button × N（圆点/页码，当前项高亮）
+</div>
+```
+
+## 相关
+
+- [组件总览](./overview)
+- [按钮](./button)
