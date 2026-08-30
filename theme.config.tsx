@@ -17,11 +17,11 @@ export const logo: ReactNode = (
 );
 
 /** 项目仓库链接（Navbar 图标使用） */
-export const projectLink = "https://github.com/DearOreUI/DearOreUI";
+export const projectLink = "https://github.com/copper-lamp/Dear-OreUI";
 
 /** 文档仓库基址（编辑此页等链接使用） */
 export const docsRepositoryBase =
-    "https://github.com/DearOreUI/DearOreUI/tree/main/Web";
+    "https://github.com/copper-lamp/Dear-OreUI/tree/main/Web";
 
 /** 页脚文案（Footer 使用） */
 export const footerText = "DearOreUI Documentation";

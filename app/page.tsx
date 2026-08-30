@@ -1,10 +1,10 @@
 import Link from "next/link";
 
-const GITHUB = "https://github.com/DearOreUI/DearOreUI";
-const DESIGNER = "https://github.com/DearOreUI/Designer";
-const DOCS_REPO = "https://github.com/DearOreUI/Docs";
-// 文档统一挂在当前版本前缀下（体验类似 git tag，切换见导航栏版本选择器）
-const DOC_VERSION = "v0.1.1";
+import { defaultVersion } from "./(docs)/versions";
+
+const GITHUB = "https://github.com/copper-lamp/Dear-OreUI";
+// 文档统一挂在最新版本前缀下（defaultVersion 即最新版，见 app/(docs)/versions.ts；切换见导航栏版本选择器）
+const DOC_VERSION = defaultVersion;
 
 const GitHubIcon = () => (
     <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden="true" fill="currentColor">
@@ -245,11 +245,11 @@ export default function HomePage() {
                     <div className="dear-hero__grid" aria-hidden="true" />
                     <div className="dear-hero__inner">
                         <div className="dear-hero__eyebrow"><i aria-hidden="true" />DearOreUI · LeviLamina 客户端前置</div>
-                        <h1 className="dear-hero__title">为 OreUI 而生。<span>为创作而定制。</span></h1>
+                        <h1 className="dear-hero__title">强大的开源UI框架。<span>为创作铺平道路。</span></h1>
                         <p className="dear-hero__lead">一个原生、开放且可扩展的 OreUI 运行时，让你快速探索界面结构，连接设计与游戏内体验。</p>
                         <div className="dear-hero__actions">
-                            <Link className="dear-btn dear-btn--primary" href={`/${DOC_VERSION}/guide/getting-started`}>开始使用</Link>
-                            <a className="dear-btn" href={DOCS_REPO}>查看文档</a>
+                            <Link className="dear-btn dear-btn--primary" href={`/${DOC_VERSION}/releases`}>开始使用</Link>
+                            <Link className="dear-btn" href={`/${DOC_VERSION}/guide/introduction`}>查看文档</Link>
                         </div>
                         <div className="dear-hero__swatches" aria-hidden="true">
                             <i style={{ background: "#f58ab9" }} /><i style={{ background: "#f7bf35" }} /><i style={{ background: "#5dd36b" }} /><i style={{ background: "#58b9ed" }} /><i style={{ background: "#9f9cff" }} />
